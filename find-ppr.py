@@ -61,6 +61,6 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('modules', help='module(s) name to search for pop pop ret', nargs='+')
+    parser.add_argument('modules', help='module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)', nargs='+')
     args = parser.parse_args()
     main(args)
