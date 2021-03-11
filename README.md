@@ -5,3 +5,9 @@ bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OS
 all scripts require `pykd`
 
 run `.load pykd` then `!py c:\path\to\this\repo\script.py` 
+
+## find-ppr.py
+
+```
+!py find-ppr.py libspp diskpls
+```
