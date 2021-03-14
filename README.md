@@ -10,7 +10,7 @@ requires [keystone-engine](https://github.com/keystone-engine/keystone)
  
 
 ```
-usage: egghunter.py [-h] [-t TAG] [-b BAD_CHARS [BAD_CHARS ...]]
+usage: egghunter.py [-h] [-t TAG] [-b BAD_CHARS [BAD_CHARS ...]] [-s]
 
 Creates an egghunter compatible with the OSED lab VM
 
@@ -19,6 +19,8 @@ optional arguments:
   -t TAG, --tag TAG     tag for which the egghunter will search (default: c0d3)
   -b BAD_CHARS [BAD_CHARS ...], --bad-chars BAD_CHARS [BAD_CHARS ...]
                         space separated list of bad chars to check for in final egghunter (default: 00)
+  -s, --seh             create an seh based egghunter instead of NtAccessCheckAndAuditAlarm
+
 ```                        
 
 generate default egghunter
