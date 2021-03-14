@@ -1,12 +1,37 @@
 # osed-scripts
 bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OSED)
 
-## Requirements:
-all scripts require `pykd`
+## Standalone Scripts
+
+### egghunter.py
+
+requires [keystone-engine](https://github.com/keystone-engine/keystone)
+
+Creates an egghunter compatible with the OSED lab VM 
+
+```
+./egghunter.py 
+egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x05\x5a\x74\xec\xb8\x63\x30\x64\x33\x89\xd7\xaf\x75\xe7\xaf\x75\xe4\xff\xe7"
+egghunter created:
+  len: 35 bytes
+  tag: c0d3c0d3
+```
+
+```
+./egghunter.py --tag w00t
+egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x05\x5a\x74\xec\xb8\x77\x30\x30\x74\x89\xd7\xaf\x75\xe7\xaf\x75\xe4\xff\xe7"
+egghunter created:
+  len: 35 bytes
+  tag: w00tw00t
+```
+
+## WinDbg Scripts
+
+all windbg scripts require `pykd`
 
 run `.load pykd` then `!py c:\path\to\this\repo\script.py` 
 
-## find-ppr.py
+### find-ppr.py
 
 Search for `pop r32; pop r32; ret` instructions by module name
 
