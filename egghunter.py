@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import sys
 import argparse
 import keystone as ks
 
@@ -39,17 +40,33 @@ def main(args):
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     encoding, count = eng.asm(egghunter)
 
-    print('egghunter = b"', end='')
+    final = ""
+
+    final += 'egghunter = b"'
 
     for enc in encoding:
-        print("\\x{0:02x}".format(enc), end='')
+        final += "\\x{0:02x}".format(enc)
 
-    print('"')
+    final += '"'
+
+    sentry = False
+
+    for bad in args.bad_chars:
+        if bad in final:
+            print(f"[!] Found 0x{bad}")
+            sentry = True
+    
+    if sentry:
+        print(f'[=] {final[14:-1]}', file=sys.stderr)
+        raise SystemExit("[!] Remove bad characters and try again")
+    
+    print(final)
     print(f"egghunter created:\n  len: {len(encoding)} bytes\n  tag: {args.tag * 2}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--tag', help='tag for which the egghunter will search', default='c0d3')
+    parser = argparse.ArgumentParser(description='Creates an egghunter compatible with the OSED lab VM')
+    parser.add_argument('-t', '--tag', help='tag for which the egghunter will search (default: c0d3)', default='c0d3')
+    parser.add_argument('-b', '--bad-chars', help='space separated list of bad chars to check for in final egghunter (default: 00)', default=['00'], nargs='+')
     
     args = parser.parse_args()
 
