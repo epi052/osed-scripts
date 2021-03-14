@@ -109,7 +109,8 @@ def main(args):
     
     print(f"[+] egghunter created!")
     print(f"[=]   len: {len(encoding)} bytes")
-    print(f"[=]   tag: {args.tag * 2}\n")
+    print(f"[=]   tag: {args.tag * 2}")
+    print(f"[=]   ver: {['NtAccessCheckAndAuditAlarm', 'SEH'][args.seh]}\n")
     print(final)
 
 if __name__ == '__main__':

