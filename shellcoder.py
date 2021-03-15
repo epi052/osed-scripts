@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-import sys
 import argparse
 import ctypes
 import struct
+import sys
+
 import keystone as ks
 
 
