@@ -24,7 +24,8 @@ $p = [System.Environment]::GetEnvironmentVariable('Path',[System.EnvironmentVari
 # install old c++ runtime
 echo "[+] installing old c++ runtime"
 copy "$share_path\vcredist_x86.exe" $install_dir
-& $install_dir\vcredist_x86.exe /Q
+cd $install_dir
+.\vcredist_x86.exe /q
 start-sleep 10
 
 # register runtime debug dll
