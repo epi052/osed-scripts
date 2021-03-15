@@ -59,6 +59,8 @@ egghunter = b"\xeb\x2a\x59\xb8\x63\x30\x64\x33\x51\x6a\xff\x31\xdb\x64\x89\x23\x
 
 ### shellcoder.py
 
+requires [keystone-engine](https://github.com/keystone-engine/keystone)
+
 Creates reverse shell with optional msi loader
 
 ```
