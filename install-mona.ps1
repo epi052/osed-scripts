@@ -26,7 +26,7 @@ echo "[+] installing old c++ runtime"
 copy "$share_path\vcredist_x86.exe" $install_dir
 cd $install_dir
 .\vcredist_x86.exe 
-start-sleep 10
+read-host "press enter once you've installed the runtime"
 
 # register runtime debug dll
 echo "[+] registering runtime debug dll"
