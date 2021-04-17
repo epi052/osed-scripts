@@ -65,7 +65,7 @@ requires
 - [rich](https://github.com/willmcgugan/rich)
 - [ropper](https://github.com/sashs/Ropper)
 
-```python
+```text
 usage: find-gadgets.py [-h] -f FILES [FILES ...] [-b BAD_CHARS [BAD_CHARS ...]] [-o OUTPUT]
 
 Searches for clean, categorized gadgets from a given list of files
@@ -82,7 +82,7 @@ optional arguments:
 
 find gadgets in multiple files and omit `0x00` and `0xde` from all gadgets
 
-```python
+```text
 ./find-gadgets.py -f libeay32IBM019.dll FastBackServer.exe -b 00 de
 
 [+] Categorized gadgets                                                                                                                                                                                                              
