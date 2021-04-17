@@ -57,6 +57,263 @@ egghunter = b"\xeb\x2a\x59\xb8\x63\x30\x64\x33\x51\x6a\xff\x31\xdb\x64\x89\x23\x
 
 ```
 
+### find-gadgets.py
+
+Finds and categorizes useful gadgets. Only prints to terminal the cleanest gadgets available (minimal amount of garbage between what's searched for and the final ret instruction).  All gadgets are written to a text file for further searching.
+
+requires
+- [rich](https://github.com/willmcgugan/rich)
+- [ropper](https://github.com/sashs/Ropper)
+
+```python
+usage: find-gadgets.py [-h] -f FILES [FILES ...] [-b BAD_CHARS [BAD_CHARS ...]] [-o OUTPUT]
+
+Searches for clean, categorized gadgets from a given list of files
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f FILES [FILES ...], --files FILES [FILES ...]
+                        space separated list of files from which to pull gadgets
+  -b BAD_CHARS [BAD_CHARS ...], --bad-chars BAD_CHARS [BAD_CHARS ...]
+                        space separated list of bad chars to omit from gadgets (default: 00)
+  -o OUTPUT, --output OUTPUT
+                        name of output file where all (uncategorized) gadgets are written (default: found-gadgets.txt)
+```
+
+find gadgets in multiple files and omit `0x00` and `0xde` from all gadgets
+
+```python
+./find-gadgets.py -f libeay32IBM019.dll FastBackServer.exe -b 00 de
+
+[+] Categorized gadgets                                                                                                                                                                                                              
+├── write-what-where gadgets                                                                                                                                                                                                         
+│   ├── 0x10001f7e: mov dword ptr [eax], ecx; ret;                                                                                                                                                                                   
+│   ├── 0x1000200e: mov dword ptr [eax], edx; ret;                                                                                                                                                                                   
+│   ├── 0x10084b68: mov dword ptr [ecx], eax; ret;                                                                                                                                                                                   
+│   ├── 0x1002b8ca: mov dword ptr [ecx], edx; ret;                                                                                                                                                                                   
+│   ├── 0x1008831e: mov dword ptr [edx], eax; ret;                                                                                                                                                                                   
+│   ├── 0x100533fb: mov dword ptr [edx], ecx; ret;                                                                                                                                                                                   
+│   ├── 0x100884de: mov dword ptr [esp], eax; ret;                                                                                                                                                                                   
+│   ├── 0x0066761d: mov dword ptr [eax], ecx; ret;                                                                                                                                                                                   
+│   ├── 0x006764c6: mov dword ptr [ecx], eax; ret;                                                                                                                                                                                   
+│   └── 0x0067227c: mov dword ptr [edx], ecx; ret;                                                                                                                                                                                   
+├── pointer deref gadgets                                                                                                                                                                                                            
+│   ├── 0x1001d4b4: mov eax, dword ptr [eax]; ret;                                                                                                                                                                                   
+│   ├── 0x100391a6: mov eax, dword ptr [ecx]; ret;                                                                                                                                                                                   
+│   └── 0x00669ba4: mov eax, dword ptr [eax]; ret;                                                                                                                                                                                   
+├── swap register gadgets                                                                                                                                                                                                            
+│   ├── 0x1001d023: mov eax, ecx; ret;                                                                                                                                                                                               
+│   ├── 0x10035991: mov eax, edx; ret;                                                                                                                                                                                               
+│   ├── 0x0066ab4e: mov eax, edx; ret;                                                                                                                                                                                               
+│   ├── 0x1005328e: xchg eax, ebp; ret 0x189;                                                                                                                                                                                        
+│   ├── 0x10001f65: xchg eax, ebp; ret 0x234a;                                                                                                                                                                                       
+│   ├── 0x1003598b: xchg eax, ebp; ret 0x4689;                                                                                                                                                                                       
+│   ├── 0x1001d500: xchg eax, ebp; ret 0x46c7;                                                                                                                                                                                       
+│   ├── 0x1004832f: xchg eax, ebp; ret 0x814a;                                                                                                                                                                                       
+│   ├── 0x1003c819: xchg eax, ebp; ret 0xca2b;                                                                                                                                                                                       
+│   ├── 0x10021b57: xchg eax, ebp; ret 0xffff;                                                                                                                                                                                       
+│   ├── 0x100773aa: xchg eax, edx; ret 0xfffc;                                                                                                                                                                                       
+│   ├── 0x10025746: xchg eax, edx; ret 6;                                                                                                                                                                                            
+│   ├── 0x10021a5a: xchg eax, edx; ret;                                                                                                                                                                                              
+│   ├── 0x10067e70: xchg eax, esp; ret 0x5489;                                                                                                                                                                                       
+│   ├── 0x100517c7: xchg eax, esp; ret 0x8b5e;                                                                                                                                                                                       
+│   ├── 0x10088e3f: xchg eax, esp; ret 0xc28b;                                                                                                                                                                                       
+│   ├── 0x1000ee6f: xchg eax, esp; ret 0xe383;                                                                                                                                                                                       
+│   ├── 0x1005b774: xchg eax, esp; ret 0xfa8b;                                                                                                                                                                                       
+│   ├── 0x1003a003: xchg eax, esp; ret;                                                                                                                                                                                              
+│   ├── 0x004b789a: xchg eax, ebp; ret 0x5588;                                                                                                                                                                                       
+│   ├── 0x00464a14: xchg eax, ebp; ret 0x5589;                                                                                                                                                                                       
+│   ├── 0x004595fa: xchg eax, ebp; ret 0x6852;                                                                                                                                                                                       
+│   ├── 0x00531a63: xchg eax, ebp; ret 0x9589;                                                                                                                                                                                       
+│   ├── 0x00524259: xchg eax, ebp; ret 0xa152;                                                                                                                                                                                       
+│   ├── 0x004d78a3: xchg eax, ebp; ret 0xc283;                                                                                                                                                                                       
+│   ├── 0x0066aa06: xchg eax, ebp; ret 0xc28b;                                                                                                                                                                                       
+│   ├── 0x005aea1c: xchg eax, ebp; ret 0xffef;                                                                                                                                                                                       
+│   ├── 0x005b0484: xchg eax, ebp; ret 0xfff7;                                                                                                                                                                                       
+│   ├── 0x0062b931: xchg eax, ebp; ret 3;                                                                                                                                                                                            
+│   ├── 0x0040bb68: xchg eax, ebp; ret;                                                                                                                                                                                              
+│   ├── 0x0067a849: xchg eax, ebx; ret 0xfffe;                                                                                                                                                                                       
+│   ├── 0x005c5f0e: xchg eax, ebx; ret 0xffff;                                                                                                                                                                                       
+│   ├── 0x0040aeeb: xchg eax, ecx; ret 0x25;                                                                                                                                                                                         
+│   ├── 0x00583c51: xchg eax, ecx; ret 2;                                                                                                                                                                                            
+│   ├── 0x004164a9: xchg eax, ecx; ret;                                                                                                                                                                                              
+│   ├── 0x004f9d19: xchg eax, edi; ret;                                                                                                                                                                                              
+│   ├── 0x00449b16: xchg eax, edx; ret 1;                                                                                                                                                                                            
+│   ├── 0x004c409b: xchg eax, edx; ret;                                                                                                                                                                                              
+│   ├── 0x00624f18: xchg eax, esi; ret 0xffe5;                                                                                                                                                                                       
+│   ├── 0x004a311f: xchg eax, esp; ret 0x458b;                                                                                                                                                                                       
+│   ├── 0x0045ac84: xchg eax, esp; ret 0x5589;                                                                                                                                                                                       
+│   ├── 0x00410ac6: xchg eax, esp; ret 0x75;                                                                                                                                                                                         
+│   ├── 0x0043bdbe: xchg eax, esp; ret 0x76;                                                                                                                                                                                         
+│   ├── 0x00577cbd: xchg eax, esp; ret 0x858b;                                                                                                                                                                                       
+│   ├── 0x005ef9b6: xchg eax, esp; ret 0x88;                                                                                                                                                                                         
+│   ├── 0x0057c2f4: xchg eax, esp; ret 0x8b52;                                                                                                                                                                                       
+│   ├── 0x00457c64: xchg eax, esp; ret 0x9589;                                                                                                                                                                                       
+│   ├── 0x004c253a: xchg eax, esp; ret 0x97;                                                                                                                                                                                         
+│   ├── 0x0064cf16: xchg eax, esp; ret 0xc28a;                                                                                                                                                                                       
+│   ├── 0x00470e3c: xchg eax, esp; ret 0xd285;                                                                                                                                                                                       
+│   ├── 0x005fb5b0: xchg eax, esp; ret 0xe852;                                                                                                                                                                                       
+│   ├── 0x00483aab: xchg eax, esp; ret;                                                                                                                                                                                              
+│   ├── 0x100408dd: push eax; pop esi; ret;                                                                                                                                                                                          
+│   └── 0x100408d6: push esp; pop esi; ret;                                                                                                                                                                                          
+├── increment register gadgets                                                                                                                                                                                                       
+│   ├── 0x1000bc79: inc eax; ret;                                                                                                                                                                                                    
+│   ├── 0x10003d67: inc ebp; ret;                                                                                                                                                                                                    
+│   ├── 0x1008a4ea: inc ecx; ret 0x330a;                                                                                                                                                                                             
+│   ├── 0x10011b7c: inc ecx; ret 0x8108;                                                                                                                                                                                             
+│   ├── 0x100054cd: inc ecx; ret 0xc11e;                                                                                                                                                                                             
+│   ├── 0x1001a65d: inc ecx; ret;                                                                                                                                                                                                    
+│   ├── 0x1005bfa5: inc edi; ret 0xffff;                                                                                                                                                                                             
+│   ├── 0x10044565: inc edi; ret;                                                                                                                                                                                                    
+│   ├── 0x100540da: inc edx; ret 0xfffe;                                                                                                                                                                                             
+│   ├── 0x10078d5a: inc edx; ret;                                                                                                                                                                                                    
+│   ├── 0x100260e6: inc esi; ret 0xffff;                                                                                                                                                                                             
+│   ├── 0x10003e76: inc esi; ret 3;                                                                                                                                                                                                  
+│   ├── 0x10003d98: inc esp; ret;                                                                                                                                                                                                    
+│   ├── 0x005059fe: inc eax; ret 0x7d;                                                                                                                                                                                               
+│   ├── 0x005dbc70: inc eax; ret 5;                                                                                                                                                                                                  
+│   ├── 0x004f268e: inc eax; ret;                                                                                                                                                                                                    
+│   ├── 0x005c3d14: inc ebp; ret 0x4d8a;                                                                                                                                                                                             
+│   ├── 0x00671ebb: inc ebp; ret 0xc483;                                                                                                                                                                                             
+│   ├── 0x00441cfc: inc ebp; ret 0xc600;                                                                                                                                                                                             
+│   ├── 0x00671eb1: inc ebp; ret 0xe850;                                                                                                                                                                                             
+│   ├── 0x00600228: inc ebp; ret 0xffe8;                                                                                                                                                                                             
+│   ├── 0x00441d00: inc ebp; ret;                                                                                                                                                                                                    
+│   ├── 0x0063599b: inc ecx; ret 0xffff;                                                                                                                                                                                             
+│   ├── 0x0050adf6: inc edi; ret 0xfffc;                                                                                                                                                                                             
+│   ├── 0x004b1d2f: inc edx; ret 0x17;                                                                                                                                                                                               
+│   ├── 0x005e7fcb: inc edx; ret 0xffe9;                                                                                                                                                                                             
+│   ├── 0x004fdc30: inc esi; ret 0x15;                                                                                                                                                                                               
+│   ├── 0x0048f101: inc esi; ret 0x1c;                                                                                                                                                                                               
+│   ├── 0x00618c50: inc esi; ret 0xffff;                                                                                                                                                                                             
+│   ├── 0x005cbc6a: inc esi; ret 6;                                                                                                                                                                                                  
+│   ├── 0x00633b36: inc esi; ret;                                                                                                                                                                                                    
+│   ├── 0x0052f193: inc esp; ret 0x7f;                                                                                                                                                                                               
+│   ├── 0x00422cfb: inc esp; ret 0xc160;                                                                                                                                                                                             
+│   ├── 0x004b0b84: inc esp; ret 0xfffd;                                                                                                                                                                                             
+│   └── 0x0043bdf2: inc esp; ret;                                                                                                                                                                                                    
+├── decrement register gadgets                                                                                                                                                                                                       
+│   ├── 0x10009f49: dec eax; ret;                                                                                                                                                                                                    
+│   ├── 0x10083d5f: dec ebp; ret;                                                                                                                                                                                                    
+│   ├── 0x10075fd3: dec ecx; ret;                                                                                                                                                                                                    
+│   ├── 0x1003797d: dec edi; ret;                                                                                                                                                                                                    
+│   ├── 0x10031aa2: dec edx; ret;                                                                                                                                                                                                    
+│   ├── 0x1002578a: dec esi; ret 6;                                                                                                                                                                                                  
+│   ├── 0x100665b6: dec esp; ret;                                                                                                                                                                                                    
+│   ├── 0x005440ae: dec eax; ret 0x80;                                                                                                                                                                                               
+│   ├── 0x004b41e5: dec eax; ret 0xfffc;                                                                                                                                                                                             
+│   ├── 0x004f2653: dec eax; ret;                                                                                                                                                                                                    
+│   ├── 0x004941e0: dec ebp; ret 0xfffe;                                                                                                                                                                                             
+│   ├── 0x005c3929: dec ebp; ret;                                                                                                                                                                                                    
+│   ├── 0x004940e2: dec ebx; ret;                                                                                                                                                                                                    
+│   ├── 0x0066c080: dec ecx; ret;                                                                                                                                                                                                    
+│   ├── 0x005cccd8: dec edx; ret 0x5c;                                                                                                                                                                                               
+│   ├── 0x0043bdb1: dec esp; ret 0x76;                                                                                                                                                                                               
+│   ├── 0x004a0a66: dec esp; ret 0x79;                                                                                                                                                                                               
+│   ├── 0x004d3a29: dec esp; ret 0x7b;                                                                                                                                                                                               
+│   ├── 0x0052f1a4: dec esp; ret 0x7f;                                                                                                                                                                                               
+│   ├── 0x004393b4: dec esp; ret 0x8b09;                                                                                                                                                                                             
+│   ├── 0x0064f551: dec esp; ret 0x8b;                                                                                                                                                                                               
+│   └── 0x004f26d6: dec esp; ret;                                                                                                                                                                                                    
+├── add register gadgets                                                                                                                                                                                                             
+│   ├── 0x1001d0f0: add eax, ecx; ret;                                                                                                                                                                                               
+│   ├── 0x10020478: add ebp, eax; ret 0x231;                                                                                                                                                                                         
+│   ├── 0x005d84ec: add eax, ebp; ret 0x5f9;                                                                                                                                                                                         
+│   ├── 0x005ccaec: add eax, ebp; ret 0x6b3;                                                                                                                                                                                         
+│   ├── 0x00484a65: add eax, ebp; ret;                                                                                                                                                                                               
+│   ├── 0x005424d2: add ebp, eax; ret 0xf1a9;                                                                                                                                                                                        
+│   ├── 0x00453150: add ebp, eax; ret;                                                                                                                                                                                               
+│   ├── 0x005aa9af: add ebx, ebp; ret;                                                                                                                                                                                               
+│   ├── 0x00667ca3: add ecx, ecx; ret;                                                                                                                                                                                               
+│   └── 0x006768c0: add esi, esi; ret;                                                                                                                                                                                               
+├── subtract register gadgets                                                                                                                                                                                                        
+│   ├── 0x1003a287: sub eax, edx; ret;                                                                                                                                                                                               
+│   ├── 0x00667f1a: sub eax, ecx; ret;                                                                                                                                                                                               
+│   ├── 0x0067b77e: sub eax, edx; ret;                                                                                                                                                                                               
+│   └── 0x0066a121: sub esi, esi; ret;                                                                                                                                                                                               
+├── negate register gadgets                                                                                                                                                                                                          
+│   └── 0x1001d8c2: neg eax; ret;                                                                                                                                                                                                    
+├── pop gadgets                                                                                                                                                                                                                      
+│   ├── 0x10048d5b: pop eax; ret;                                                                                                                                                                                                    
+│   ├── 0x10088b26: pop ebp; ret 0xc;                                                                                                                                                                                                
+│   ├── 0x10001929: pop ebp; ret;                                                                                                                                                                                                    
+│   ├── 0x10088580: pop ebx; ret 0x10;                                                                                                                                                                                               
+│   ├── 0x1000708c: pop ebx; ret 0x3956;                                                                                                                                                                                             
+│   ├── 0x10001b73: pop ebx; ret;                                                                                                                                                                                                    
+│   ├── 0x100010c2: pop ecx; ret;                                                                                                                                                                                                    
+│   ├── 0x10001645: pop edi; ret;                                                                                                                                                                                                    
+│   ├── 0x10088771: pop esi; ret 0x10;                                                                                                                                                                                               
+│   ├── 0x1003310e: pop esi; ret 0xfffe;                                                                                                                                                                                             
+│   ├── 0x10001535: pop esi; ret;                                                                                                                                                                                                    
+│   ├── 0x10009e50: pop esp; ret 3;                                                                                                                                                                                                  
+│   ├── 0x10004f6c: pop esp; ret;                                                                                                                                                                                                    
+│   ├── 0x006777bf: pop eax; ret 4;                                                                                                                                                                                                  
+│   ├── 0x0067780b: pop eax; ret 8;                                                                                                                                                                                                  
+│   ├── 0x004f22f2: pop eax; ret;                                                                                                                                                                                                    
+│   ├── 0x0040157d: pop ebp; ret 0x10;                                                                                                                                                                                               
+│   ├── 0x006230bb: pop ebp; ret 0x14;                                                                                                                                                                                               
+│   ├── 0x0064ac3b: pop ebp; ret 0x18;                                                                                                                                                                                               
+│   ├── 0x004047e7: pop ebp; ret 0x1c;                                                                                                                                                                                               
+│   ├── 0x00652aef: pop ebp; ret 0x2c;                                                                                                                                                                                               
+│   ├── 0x00679568: pop ebp; ret 0x758b;                                                                                                                                                                                             
+│   ├── 0x004017af: pop ebp; ret 0xc;                                                                                                                                                                                                
+│   ├── 0x0040115f: pop ebp; ret 4;                                                                                                                                                                                                  
+│   ├── 0x0040114a: pop ebp; ret 8;                                                                                                                                                                                                  
+│   ├── 0x00401015: pop ebp; ret;                                                                                                                                                                                                    
+│   ├── 0x006673e0: pop ebx; ret 0x10;                                                                                                                                                                                               
+│   ├── 0x0067b7c4: pop ebx; ret 0xc;                                                                                                                                                                                                
+│   ├── 0x0066689e: pop ebx; ret 4;                                                                                                                                                                                                  
+│   ├── 0x0066685c: pop ebx; ret;                                                                                                                                                                                                    
+│   ├── 0x0044940a: pop ecx; ret 0;                                                                                                                                                                                                  
+│   ├── 0x006241d4: pop ecx; ret 0xffe5;                                                                                                                                                                                             
+│   ├── 0x006662b7: pop ecx; ret;                                                                                                                                                                                                    
+│   ├── 0x00667bc6: pop edi; ret 0x10;                                                                                                                                                                                               
+│   ├── 0x005a40ce: pop edi; ret;                                                                                                                                                                                                    
+│   ├── 0x004cdcfa: pop edx; ret;                                                                                                                                                                                                    
+│   ├── 0x0067a9bc: pop esi; ret 0xc;                                                                                                                                                                                                
+│   ├── 0x0066a33a: pop esi; ret 4;                                                                                                                                                                                                  
+│   ├── 0x0067a966: pop esi; ret 8;                                                                                                                                                                                                  
+│   ├── 0x004f40cf: pop esi; ret;                                                                                                                                                                                                    
+│   ├── 0x00463bdf: pop esp; ret 0x77;                                                                                                                                                                                               
+│   └── 0x004f243d: pop esp; ret;                                                                                                                                                                                                    
+├── push-pop gadgets                                                                                                                                                                                                                 
+│   └── 0x00667f1a: sub eax, ecx; ret;                                                                                                                                                                                               
+├── zeroize gadgets                                                                                                                                                                                                                  
+│   ├── 0x10001ba1: xor eax, eax; ret;                                                                                                                                                                                               
+│   ├── 0x0067bb4a: xor eax, eax; ret 8;                                                                                                                                                                                             
+│   ├── 0x006663a5: xor eax, eax; ret;                                                                                                                                                                                               
+│   ├── 0x1004e48f: mov eax, 0; setne al; ret;                                                                                                                                                                                       
+│   ├── 0x0067bf10: and eax, 0; mov dword ptr [esp + 0xc], ebp; lea ebp, [esp + 0xc]; push eax; ret;                                                                                                                                 
+│   ├── 0x10058e30: xor ebx, ebx; call 0x58d60; add esp, 0xc; pop ebx; ret;                                                                                                                                                          
+│   ├── 0x100882e6: xor ecx, ecx; mov dword ptr [eax], ecx; mov dword ptr [eax + 4], ecx; ret;                                                                                                                                       
+│   ├── 0x100885ac: xor edx, edx; ret;                                                                                                                                                                                               
+│   ├── 0x006672ac: xor edx, edx; ret;                                                                                                                                                                                               
+│   ├── 0x0066de28: xor esi, esi; ret 0x7481;                                                                                                                                                                                        
+│   ├── 0x0066a121: sub esi, esi; ret;                                                                                                                                                                                               
+│   └── 0x00666df0: xor edi, edi; ret;                                                                                                                                                                                               
+└── eip to esp gadgets                                                                                                                                                                                                               
+    ├── 0x100889ed: leave; ret 0xc;                                                                                                                                                                                                  
+    ├── 0x10087273: leave; ret;                                                                                                                                                                                                      
+    ├── 0x0066631d: leave; ret 0x10;                                                                                                                                                                                                 
+    ├── 0x0066a4cd: leave; ret 0x14;                                                                                                                                                                                                 
+    ├── 0x00670298: leave; ret 0xc;                                                                                                                                                                                                  
+    ├── 0x00669403: leave; ret 4;                                                                                                                                                                                                    
+    ├── 0x006664fd: leave; ret 8;                                                                                                                                                                                                    
+    ├── 0x0041a708: leave; ret;                                                                                                                                                                                                      
+    ├── 0x10001927: mov esp, ebp; pop ebp; ret;                                                                                                                                                                                      
+    ├── 0x0040157b: mov esp, ebp; pop ebp; ret 0x10;                                                                                                                                                                                 
+    ├── 0x006230b9: mov esp, ebp; pop ebp; ret 0x14;                                                                                                                                                                                 
+    ├── 0x0064ac39: mov esp, ebp; pop ebp; ret 0x18;                                                                                                                                                                                 
+    ├── 0x004047e5: mov esp, ebp; pop ebp; ret 0x1c;                                                                                                                                                                                 
+    ├── 0x00652aed: mov esp, ebp; pop ebp; ret 0x2c;                                                                                                                                                                                 
+    ├── 0x004017ad: mov esp, ebp; pop ebp; ret 0xc;                                                                                                                                                                                  
+    ├── 0x00401190: mov esp, ebp; pop ebp; ret 4;                                                                                                                                                                                    
+    ├── 0x00401728: mov esp, ebp; pop ebp; ret 8;                                                                                                                                                                                    
+    └── 0x005c6955: mov esp, ebp; pop ebp; ret;                                                                                                                                                                                      
+[+] Collection of all gadgets written to found-gadgets.txt
+
+```
+
 ### shellcoder.py
 
 requires [keystone-engine](https://github.com/keystone-engine/keystone)
@@ -132,6 +389,8 @@ Clipboard(error): xclip_handle_SelectionNotify(), unable to find a textual targe
 
 ```
 
+
+```
 
 ## WinDbg Scripts
 
