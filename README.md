@@ -1,6 +1,16 @@
 # osed-scripts
 bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OSED)
 
+## Table of Contents
+
+- [Standalone Scripts](#standalone-scripts)
+    - [egghunter.py](#egghunterpy)
+    - [find-gadgets.py](#find-gadgetspy)
+    - [shellcoder.py](#shellcoderpy)
+    - [install-mona.sh](#install-monash)
+- [WinDbg Scripts](#windbg-scripts)
+    - [find-ppr.py](#find-pprpy)
+
 ## Standalone Scripts
 
 ### egghunter.py
@@ -61,9 +71,7 @@ egghunter = b"\xeb\x2a\x59\xb8\x63\x30\x64\x33\x51\x6a\xff\x31\xdb\x64\x89\x23\x
 
 Finds and categorizes useful gadgets. Only prints to terminal the cleanest gadgets available (minimal amount of garbage between what's searched for and the final ret instruction).  All gadgets are written to a text file for further searching.
 
-requires
-- [rich](https://github.com/willmcgugan/rich)
-- [ropper](https://github.com/sashs/Ropper)
+requires [rich](https://github.com/willmcgugan/rich) and [ropper](https://github.com/sashs/Ropper)
 
 ```text
 usage: find-gadgets.py [-h] -f FILES [FILES ...] [-b BAD_CHARS [BAD_CHARS ...]] [-o OUTPUT]
