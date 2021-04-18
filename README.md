@@ -397,9 +397,6 @@ Clipboard(error): xclip_handle_SelectionNotify(), unable to find a textual targe
 
 ```
 
-
-```
-
 ## WinDbg Scripts
 
 all windbg scripts require `pykd`
