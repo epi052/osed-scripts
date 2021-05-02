@@ -81,14 +81,14 @@ Searches for clean, categorized gadgets from a given list of files
 optional arguments:
   -h, --help            show this help message and exit
   -f FILES [FILES ...], --files FILES [FILES ...]
-                        space separated list of files from which to pull gadgets
+                        space separated list of files from which to pull gadgets (optionally, add base address (libspp.dll:0x10000000))
   -b BAD_CHARS [BAD_CHARS ...], --bad-chars BAD_CHARS [BAD_CHARS ...]
                         space separated list of bad chars to omit from gadgets (default: 00)
   -o OUTPUT, --output OUTPUT
                         name of output file where all (uncategorized) gadgets are written (default: found-gadgets.txt)
 ```
 
-find gadgets in multiple files and omit `0x00` and `0xde` from all gadgets
+find gadgets in multiple files (one is loaded at a different offset than what the dll prefers) and omit `0x00` and `0xde` from all gadgets
 
 ![gadgets](img/gadgets.png)
 
