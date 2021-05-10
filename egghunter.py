@@ -89,10 +89,24 @@ def main(args):
     egghunter = ntaccess_hunter(args.tag) if not args.seh else seh_hunter(args.tag)
 
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
-    encoding, count = eng.asm(egghunter)
+    if args.seh:
+        encoding, count = eng.asm(egghunter)
+    else:
+        print("[+] Egghunter assembly code + coresponding bytes")
+        asm_blocks = ""
+        prev_size = 0
+        for line in egghunter.splitlines():
+            asm_blocks += line + "\n"
+            encoding, count = eng.asm(asm_blocks)
+            if encoding:
+                enc_opcode = ""
+                for byte in encoding[prev_size:]:
+                    enc_opcode += "0x{0:02x} ".format(byte)
+                    prev_size += 1
+                spacer = 30 - len(line)
+                print("%s %s %s" % (line, (" " * spacer), enc_opcode))
 
     final = ""
-
     final += 'egghunter = b"'
 
     for enc in encoding:
