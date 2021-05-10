@@ -89,7 +89,8 @@ def seh_hunter(tag):
 
 def main(args):
 
-    egghunter = ntaccess_hunter(args.tag) if not args.seh else seh_hunter(args.tag)
+    egghunter = ntaccess_hunter(args.tag) if not args.seh else seh_hunter(
+        args.tag)
 
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     if args.seh:
@@ -137,8 +138,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Creates an egghunter compatible with the OSED lab VM"
-    )
+        description="Creates an egghunter compatible with the OSED lab VM")
 
     parser.add_argument(
         "-t",
@@ -149,14 +149,16 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--bad-chars",
-        help="space separated list of bad chars to check for in final egghunter (default: 00)",
+        help=
+        "space separated list of bad chars to check for in final egghunter (default: 00)",
         default=["00"],
         nargs="+",
     )
     parser.add_argument(
         "-s",
         "--seh",
-        help="create an seh based egghunter instead of NtAccessCheckAndAuditAlarm",
+        help=
+        "create an seh based egghunter instead of NtAccessCheckAndAuditAlarm",
         action="store_true",
     )
 
