@@ -280,9 +280,9 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
         "       push 0xffffffff                 ;",  # hProcess
-        "       call dword ptr [ebp+0x10]       ;"   # Call TerminateProcess
+        "       call dword ptr [ebp+0x10]       ;",  # Call TerminateProcess
     ]
-    return '\n'.join(asm)
+    return "\n".join(asm)
 
 
 def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
@@ -395,9 +395,9 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
         "       push 0xffffffff                 ;",  # hProcess
-        "       call dword ptr [ebp+0x10]       ;"   # Call TerminateProcess
+        "       call dword ptr [ebp+0x10]       ;",   # Call TerminateProcess
     ]
-    return '\n'.join(asm)
+    return "\n".join(asm)
 
 
 def msg_box(header, text, breakpoint=0):
@@ -511,9 +511,9 @@ def msg_box(header, text, breakpoint=0):
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
         "       push 0xffffffff                 ;",  # hProcess
-        "       call dword ptr [ebp+0x10]       ;"   # Call TerminateProcess
+        "       call dword ptr [ebp+0x10]       ;",  # Call TerminateProcess
     ]
-    return '\n'.join(asm)
+    return "\n".join(asm)
 
 
 def main(args):
