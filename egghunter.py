@@ -88,8 +88,7 @@ def seh_hunter(tag):
 
 def main(args):
 
-    egghunter = ntaccess_hunter(
-        args.tag) if not args.seh else seh_hunter(args.tag)
+    egghunter = ntaccess_hunter(args.tag) if not args.seh else seh_hunter(args.tag)
 
     eng = ks.Ks(ks.KS_ARCH_X86, ks.KS_MODE_32)
     if args.seh:

