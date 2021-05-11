@@ -1,10 +1,11 @@
 #!/usr/bin/python3
-import sys
 import argparse
 import ctypes
 import struct
-import numpy
+import sys
+
 import keystone as ks
+import numpy
 
 
 def to_hex(s):
