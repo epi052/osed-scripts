@@ -66,9 +66,14 @@ class Gadgetizer:
 
     def add_gadgets_to_tree(self, tree):
         zeroize_strs = []
-        reg_prefix = 'e' if self.arch == 'x86' else 'r'
+        reg_prefix = "e" if self.arch == "x86" else "r"
 
-        eip_to_esp_strs = [f"jmp {reg_prefix}sp;", "leave;", f"mov {reg_prefix}sp, ???;", f"call {reg_prefix}sp;"]
+        eip_to_esp_strs = [
+            f"jmp {reg_prefix}sp;",
+            "leave;",
+            f"mov {reg_prefix}sp, ???;",
+            f"call {reg_prefix}sp;",
+        ]
 
         tree.add(self._search_gadget("write-what-where", ["mov [???], ???;"]))
         tree.add(self._search_gadget("pointer deref", ["mov ???, [???];"]))
@@ -81,13 +86,26 @@ class Gadgetizer:
         tree.add(self._search_gadget("increment register", ["inc ???;"]))
         tree.add(self._search_gadget("decrement register", ["dec ???;"]))
         tree.add(self._search_gadget("add register", [f"add ???, {reg_prefix}??;"]))
-        tree.add(self._search_gadget("subtract register", [f"sub ???, {reg_prefix}??;"]))
+        tree.add(
+            self._search_gadget("subtract register", [f"sub ???, {reg_prefix}??;"])
+        )
         tree.add(self._search_gadget("negate register", [f"neg {reg_prefix}??;"]))
         tree.add(self._search_gadget("push", [f"push {reg_prefix}??;"]))
         tree.add(self._search_gadget("pop", [f"pop {reg_prefix}??;"]))
-        tree.add(self._search_gadget("push-pop", [f"push {reg_prefix}??;.*pop {reg_prefix}??;*"]))
+        tree.add(
+            self._search_gadget(
+                "push-pop", [f"push {reg_prefix}??;.*pop {reg_prefix}??;*"]
+            )
+        )
 
-        for reg in [f"{reg_prefix}ax", f"{reg_prefix}bx", f"{reg_prefix}cx", f"{reg_prefix}dx", f"{reg_prefix}si", f"{reg_prefix}di"]:
+        for reg in [
+            f"{reg_prefix}ax",
+            f"{reg_prefix}bx",
+            f"{reg_prefix}cx",
+            f"{reg_prefix}dx",
+            f"{reg_prefix}si",
+            f"{reg_prefix}di",
+        ]:
             zeroize_strs.append(f"xor {reg}, {reg};")
             zeroize_strs.append(f"sub {reg}, {reg};")
             zeroize_strs.append(f"lea [{reg}], 0;")
@@ -152,9 +170,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-a",
         "--arch",
-        choices=['x86', 'x86_64'],
+        choices=["x86", "x86_64"],
         help="architecture of the given file (default: x86)",
-        default='x86',
+        default="x86",
     )
     parser.add_argument(
         "-o",
