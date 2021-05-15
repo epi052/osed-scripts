@@ -12,6 +12,8 @@ bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OS
     - [find-ppr.py](#find-pprpy)
 
 ## Standalone Scripts
+### Installation:
+pip3 install keystone-engine numpy
 
 ### egghunter.py
 
