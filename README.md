@@ -191,3 +191,51 @@ Search for `pop r32; pop r32; ret` instructions by module name
 [+] libspp::0x1008aebf: pop ebx; pop ecx; ret
 ...
 ```
+
+### find-ppr_ns.py
+
+Search for `pop r32; pop r32; ret` instructions by module name. By default it only shows usable addresses without bad chars defined in the BADCHARS list on line 6.
+Printed next to the gadgets is an escaped little endian address for pasting into your shellcode.
+
+    0:000> !py find-ppr_ns.py libspp libsync
+    [+] searching libsync for pop r32; pop r32; ret
+    [+] BADCHARS: \x00\x0A\x0D
+    [+] libsync: Found 0 usable gadgets!
+    [+] searching libspp for pop r32; pop r32; ret
+    [+] BADCHARS: \x00\x0A\x0D
+    [OK] libspp::0x101582b0: pop eax; pop ebx; ret ; \xB0\x82\x15\x10
+    [OK] libspp::0x1001bc5a: pop ebx; pop ecx; ret ; \x5A\xBC\x01\x10
+    ...
+    [OK] libspp::0x10150e27: pop edi; pop esi; ret ; \x27\x0E\x15\x10
+    [OK] libspp::0x10150fc8: pop edi; pop esi; ret ; \xC8\x0F\x15\x10
+    [OK] libspp::0x10151820: pop edi; pop esi; ret ; \x20\x18\x15\x10
+    [+] libspp: Found 316 usable gadgets!
+    
+    ---- STATS ----
+    >> BADCHARS: \x00\x0A\x0D
+    >> Usable Gadgets Found: 316
+    >> Module Gadget Counts
+       - libsync: 0 
+       - libspp: 316 
+    Done!
+
+Show all gadgets with the `-s` flag. 
+
+    0:000> !py find-ppr_ns.py libspp libsync -s
+    [+] searching libsync for pop r32; pop r32; ret
+    [+] BADCHARS: \x00\x0A\x0D
+    [--] libsync::0x0096add0: pop eax; pop ebx; ret ; \xD0\xAD\x96\x00
+    [--] libsync::0x00914784: pop ebx; pop ecx; ret ; \x84\x47\x91\x00
+    ...
+    [OK] libspp::0x10150e27: pop edi; pop esi; ret ; \x27\x0E\x15\x10
+    [OK] libspp::0x10150fc8: pop edi; pop esi; ret ; \xC8\x0F\x15\x10
+    [OK] libspp::0x10151820: pop edi; pop esi; ret ; \x20\x18\x15\x10
+    [+] libspp: Found 316 usable gadgets!
+    
+    ---- STATS ----
+    >> BADCHARS: \x00\x0A\x0D
+    >> Usable Gadgets Found: 316
+    >> Module Gadget Counts
+       - libsync: 0 
+       - libspp: 316 
+    Done!
