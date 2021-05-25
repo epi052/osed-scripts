@@ -1,6 +1,7 @@
-import pykd
 import argparse
 from enum import Enum, auto
+
+import pykd
 
 # Example bad chars, change to whatever
 BADCHARS = [0x00, 0x0A, 0x0D]
