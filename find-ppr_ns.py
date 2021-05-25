@@ -4,7 +4,7 @@ from enum import Enum, auto
 
 # Example bad chars, change to whatever
 BADCHARS = [0x00, 0x0A, 0x0D]
-#BADCHARS = [0x00,0x02,0x03,0x09,0x0A,0x0D,0x20,0x2E,0x2F]
+# BADCHARS = [0x00,0x02,0x03,0x09,0x0A,0x0D,0x20,0x2E,0x2F]
 
 
 class Module:
@@ -54,9 +54,9 @@ def main(args):
             continue
         numGadgets = 0  # This is the number of gadgets found in this module
         print(f"[+] searching {module.name} for pop r32; pop r32; ret")
-        print("[+] BADCHARS: ", end='')
+        print("[+] BADCHARS: ", end="")
         for i in BADCHARS:
-            print("\\x{:02X}".format(i), end='')
+            print("\\x{:02X}".format(i), end="")
         print()
 
         for pop1 in range(0x58, 0x60):
@@ -79,10 +79,12 @@ def main(args):
                             bAddrEsc += "\\x{:02X}".format(b)
                         if args.showbc and bcChk == "--":
                             print(
-                                f"[{bcChk}] {module.name}::{addr}: pop {PopR32(pop1).name}; pop {PopR32(pop2).name}; ret ; {bAddrEsc}")
+                                f"[{bcChk}] {module.name}::{addr}: pop {PopR32(pop1).name}; pop {PopR32(pop2).name}; ret ; {bAddrEsc}"
+                            )
                         elif bcChk == "OK":
                             print(
-                                f"[{bcChk}] {module.name}::{addr}: pop {PopR32(pop1).name}; pop {PopR32(pop2).name}; ret ; {bAddrEsc}")
+                                f"[{bcChk}] {module.name}::{addr}: pop {PopR32(pop1).name}; pop {PopR32(pop2).name}; ret ; {bAddrEsc}"
+                            )
                             numGadgets = numGadgets + 1
                     except ValueError:
                         # not a valid pop r32
@@ -92,9 +94,9 @@ def main(args):
         # Increment total number of gadgets found
         totalGadgets = totalGadgets + numGadgets
     print("\n---- STATS ----")  # Print out all the stats
-    print(">> BADCHARS: ", end='')
+    print(">> BADCHARS: ", end="")
     for i in BADCHARS:
-        print("\\x{:02X}".format(i), end='')
+        print("\\x{:02X}".format(i), end="")
     print()
     print(f">> Usable Gadgets Found: {totalGadgets}")
     print(">> Module Gadget Counts")
@@ -105,7 +107,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-s', dest='showbc', help='Show addresses with bad chars', action="store_true")
+        "-s", dest="showbc", help="Show addresses with bad chars", action="store_true"
+    )
     parser.add_argument(
         "modules",
         help="module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)",
