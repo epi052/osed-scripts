@@ -76,10 +76,12 @@ begin {
 process {
     $process = Get-Process $process_name
     
-    $cmd_args = "-WF c:\windbg_custom.wew -g -p $($process.id)"
+    $cmd_args = "-WF c:\windbg_custom.wew -p $($process.id)"
     
     if ($commands) {
         $cmd_args += " -c '$commands'"
+    } else {
+        $cmd_args += " -g"
     }
     
     write-host "[+] Attaching to $process_name"
