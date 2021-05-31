@@ -186,6 +186,10 @@ The values for `-service-name` and `-process-name` are tab-completeable.
 .\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands 'bp fastbackserver!recvfrom; lm lib*'
 ```
 
+```
+\\tsclient\shared\osed-scripts\attach-process.ps1 -service-name 'Sync Breeze Enterprise' -process-name syncbrs
+```
+
 ## WinDbg Scripts
 
 all windbg scripts require `pykd`
