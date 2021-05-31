@@ -8,6 +8,7 @@ bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OS
     - [find-gadgets.py](#find-gadgetspy)
     - [shellcoder.py](#shellcoderpy)
     - [install-mona.sh](#install-monash)
+    - [attach-process.ps1](#attach-processps1)
 - [WinDbg Scripts](#windbg-scripts)
     - [find-ppr.py](#find-pprpy)
 
@@ -167,6 +168,22 @@ Connection established using SSL.
 Protocol(warning): process_pdu_logon(), Unhandled login infotype 1
 Clipboard(error): xclip_handle_SelectionNotify(), unable to find a textual target to satisfy RDP clipboard text request
 
+```
+
+### attach-process.ps1
+
+Credit to discord user @SilverStr for the inspiration! 
+
+One-shot script to perform the following actions:
+- start a given service (if `-service-name` is provided)
+- start windbg and attach to the given process
+- run windbg commands after attaching (if `-commands` is provided)
+- restart a given service when windbg exits (if `-service-name` is provided)
+
+The values for `-service-name` and `-process-name` are tab-completeable. 
+
+```
+.\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands 'bp fastbackserver!recvfrom; lm lib*'
 ```
 
 ## WinDbg Scripts
