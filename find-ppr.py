@@ -93,9 +93,8 @@ def main(args):
                         pass
         print(f"[+] {module.name}: Found {numGadgets} usable gadgets!")
         modGadgetCount[module.name] = numGadgets  # Add to the dict
-        totalGadgets = (
-            totalGadgets + numGadgets
-        )  # Increment total number of gadgets found
+        totalGadgets = (totalGadgets + numGadgets
+                        )  # Increment total number of gadgets found
     print("\n---- STATS ----")  # Print out all the stats
     print(">> BADCHARS: ", end="")
     for i in BADCHARS:
@@ -109,12 +108,14 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-s", dest="showbc", help="Show addresses with bad chars", action="store_true"
-    )
+    parser.add_argument("-s",
+                        dest="showbc",
+                        help="Show addresses with bad chars",
+                        action="store_true")
     parser.add_argument(
         "modules",
-        help="module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)",
+        help=
+        "module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)",
         nargs="+",
     )
     args = parser.parse_args()
