@@ -184,7 +184,7 @@ One-shot script to perform the following actions:
 The values for `-service-name` and `-process-name` are tab-completeable. 
 
 ```
-.\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands 'bp fastbackserver!recvfrom; lm lib*'
+.\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands '.load pykd; bp fastbackserver!recvfrom'
 ```
 
 ```
