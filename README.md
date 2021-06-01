@@ -10,6 +10,7 @@ bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OS
     - [install-mona.sh](#install-monash)
 - [WinDbg Scripts](#windbg-scripts)
     - [find-ppr.py](#find-pprpy)
+    - [find-bad-chars.py](#find-bad-charspy)
 
 ## Standalone Scripts
 ### Installation:
@@ -222,3 +223,67 @@ Show all gadgets with the `-s` flag.
        - libsync: 0 
        - libspp: 316 
     Done!
+
+### find-bad-chars.py
+
+Performs two primary actions:
+- `--generate` prints a byte string useful for inclusion in python source code
+- `--address` iterates over the given memory address and compares it with the bytes generated with the given constraints
+
+```
+usage: find-bad-chars.py [-h] [-s START] [-e END] [-b BAD [BAD ...]]
+                         (-a ADDRESS | -g)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s START, --start START
+                        hex byte from which to start searching in memory
+                        (default: 00)
+  -e END, --end END     last hex byte to search for in memory (default: ff)
+  -b BAD [BAD ...], --bad BAD [BAD ...]
+                        space separated list of hex bytes that are already
+                        known bad (ex: -b 00 0a 0d)
+  -a ADDRESS, --address ADDRESS
+                        address from which to begin character comparison
+  -g, --generate        generate a byte string suitable for use in source code
+```
+
+#### --address example
+```
+0:008> !py find-bad-chars.py --address esp+1 --bad 1d --start 1 --end 7f
+0185ff55  01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 
+          01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 
+0185ff65  11 12 13 14 15 16 17 18 19 1A 1B 1C 1E 1F 20 21 
+          11 12 13 14 15 16 17 18 19 1A 1B 1C 1E 1F 20 21 
+0185ff75  22 23 24 25 00 00 FA 00 00 00 00 94 FF 85 01 F4 
+          22 23 24 25 -- -- -- -- -- -- -- -- -- -- -- -- 
+0185ff85  96 92 75 00 00 00 00 D0 96 92 75 E2 19 C1 58 DC 
+          -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+0185ff95  FF 85 01 AF 4A 98 77 00 00 00 00 2B C9 03 8C 00 
+          -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+...
+```
+#### --generate example
+```
+0:008> !py find-bad-chars.py --generate --bad 1d --start 1
+[+] characters as a range of bytes
+chars = bytes(i for i in range(1, 256) if i not in [29])
+
+[+] characters as a byte string
+chars  = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10'
+chars += b'\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1E\x1F\x20\x21'
+chars += b'\x22\x23\x24\x25\x26\x27\x28\x29\x2A\x2B\x2C\x2D\x2E\x2F\x30\x31'
+chars += b'\x32\x33\x34\x35\x36\x37\x38\x39\x3A\x3B\x3C\x3D\x3E\x3F\x40\x41'
+chars += b'\x42\x43\x44\x45\x46\x47\x48\x49\x4A\x4B\x4C\x4D\x4E\x4F\x50\x51'
+chars += b'\x52\x53\x54\x55\x56\x57\x58\x59\x5A\x5B\x5C\x5D\x5E\x5F\x60\x61'
+chars += b'\x62\x63\x64\x65\x66\x67\x68\x69\x6A\x6B\x6C\x6D\x6E\x6F\x70\x71'
+chars += b'\x72\x73\x74\x75\x76\x77\x78\x79\x7A\x7B\x7C\x7D\x7E\x7F\x80\x81'
+chars += b'\x82\x83\x84\x85\x86\x87\x88\x89\x8A\x8B\x8C\x8D\x8E\x8F\x90\x91'
+chars += b'\x92\x93\x94\x95\x96\x97\x98\x99\x9A\x9B\x9C\x9D\x9E\x9F\xA0\xA1'
+chars += b'\xA2\xA3\xA4\xA5\xA6\xA7\xA8\xA9\xAA\xAB\xAC\xAD\xAE\xAF\xB0\xB1'
+chars += b'\xB2\xB3\xB4\xB5\xB6\xB7\xB8\xB9\xBA\xBB\xBC\xBD\xBE\xBF\xC0\xC1'
+chars += b'\xC2\xC3\xC4\xC5\xC6\xC7\xC8\xC9\xCA\xCB\xCC\xCD\xCE\xCF\xD0\xD1'
+chars += b'\xD2\xD3\xD4\xD5\xD6\xD7\xD8\xD9\xDA\xDB\xDC\xDD\xDE\xDF\xE0\xE1'
+chars += b'\xE2\xE3\xE4\xE5\xE6\xE7\xE8\xE9\xEA\xEB\xEC\xED\xEE\xEF\xF0\xF1'
+chars += b'\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF'
+```
