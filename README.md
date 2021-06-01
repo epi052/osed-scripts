@@ -288,7 +288,7 @@ optional arguments:
 ```
 0:008> !py find-bad-chars.py --generate --bad 1d --start 1
 [+] characters as a range of bytes
-chars = bytes(i for i in range(1, 256) if i not in [29])
+chars = bytes(i for i in range(1, 256) if i not in [1D])
 
 [+] characters as a byte string
 chars  = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10'

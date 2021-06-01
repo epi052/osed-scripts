@@ -45,7 +45,7 @@ class Memdump:
     def _parse_line(self, line):
         # 0185ff54  99 77 9e 77 77 c9 03 8c-60 77 9e 77 60 77 9e 77  .wžwwÉ.Œ`wžw`wžw
         # double space as delim will give 0 as the address and 1 as the bytes, the rest can be discarded
-        parts = line.split("  ")[0:2]  # discard the ascii portion right away
+        parts = line.split("  ")[:2]  # discard the ascii portion right away
 
         if len(parts) == 0:
             return
@@ -93,11 +93,10 @@ def find_bad_chars(args):
         print(" " * 10, end="")  # filler for our comparison line
 
         for byte in memdump.bytes:
-            if byte == "??" or byte != chars[char_counter]:
-                # inaccessible memory from windbg
-                print("--", end=" ")
-            elif byte == chars[char_counter]:
+            if byte == chars[char_counter]:
                 print(f"{byte:02X}", end=" ")
+            else:
+                print("--", end=" ")
 
             char_counter += 1
 
@@ -105,7 +104,7 @@ def find_bad_chars(args):
 
 
 def generate_byte_string(args):
-    known_bad = ", ".join(str(x) for x in args.bad)
+    known_bad = ", ".join(f'{x:02X}' for x in args.bad)
     var_str = f"chars = bytes(i for i in range({args.start}, {args.end + 1}) if i not in [{known_bad}])"
 
     print("[+] characters as a range of bytes")
