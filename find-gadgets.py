@@ -59,7 +59,7 @@ class Gadgetizer:
     def _search_gadget(self, title, search_strs):
         title = f"[bright_yellow]{title}[/bright_yellow] gadgets"
         tree = Tree(title)
-        gadget_filter = re.compile(r'ret 0x[0-9a-fA-F]{3,};')  # filter out rets larger than 256
+        gadget_filter = re.compile(r'ret 0x[0-9a-fA-F]{3,};')  # filter out rets larger than 255
 
         for search_str in search_strs:
             for file, gadget in self.get_gadgets(search_str):
