@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import sys
 import argparse
 
@@ -9,8 +10,9 @@ from ropper import RopperService
 
 
 class Gadgetizer:
-    def __init__(self, files, badbytes, output, arch):
+    def __init__(self, files, badbytes, output, arch, color):
         self.arch = arch
+        self.color = color
         self.files = files
         self.output = output
         self.badbytes = "".join(
@@ -21,7 +23,7 @@ class Gadgetizer:
     def get_ropper_service(self):
         # not all options need to be given
         options = {
-            "color": True,
+            "color": self.color,
             "badbytes": self.badbytes,
             "type": "rop",
         }  # if gadgets are printed, use detailed output; default: False
@@ -57,9 +59,13 @@ class Gadgetizer:
     def _search_gadget(self, title, search_strs):
         title = f"[bright_yellow]{title}[/bright_yellow] gadgets"
         tree = Tree(title)
+        gadget_filter = re.compile(r'ret 0x[0-9a-fA-F]{3,};')  # filter out rets larger than 256
 
         for search_str in search_strs:
             for file, gadget in self.get_gadgets(search_str):
+                if gadget_filter.search(gadget.simpleString()):
+                    # not sure how to filter large ret sizes within ropper's search functionality, so doing it here
+                    continue
                 tree.add(f"{escape(str(gadget))} :: {file}")
 
         return tree
@@ -90,6 +96,7 @@ class Gadgetizer:
             self._search_gadget("subtract register", [f"sub ???, {reg_prefix}??;"])
         )
         tree.add(self._search_gadget("negate register", [f"neg {reg_prefix}??;"]))
+        tree.add(self._search_gadget("xor register", [f"xor {reg_prefix}??, 0x????????"]))
         tree.add(self._search_gadget("push", [f"push {reg_prefix}??;"]))
         tree.add(self._search_gadget("pop", [f"pop {reg_prefix}??;"]))
         tree.add(
@@ -130,7 +137,7 @@ class Gadgetizer:
 
 
 def main(args):
-    g = Gadgetizer(args.files, args.bad_chars, args.output, args.arch)
+    g = Gadgetizer(args.files, args.bad_chars, args.output, args.arch, args.color)
 
     tree = Tree(
         f'[bright_green][+][/bright_green] Categorized gadgets :: {" ".join(sys.argv)}'
@@ -179,6 +186,12 @@ if __name__ == "__main__":
         "--output",
         help="name of output file where all (uncategorized) gadgets are written (default: found-gadgets.txt)",
         default="found-gadgets.txt",
+    )
+    parser.add_argument(
+        "-c",
+        "--color",
+        help="colorize gadgets in output (default: False)",
+        action='store_true',
     )
 
     args = parser.parse_args()
