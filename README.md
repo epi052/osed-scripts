@@ -77,6 +77,10 @@ Finds and categorizes useful gadgets. Only prints to terminal the cleanest gadge
 
 requires [rich](https://github.com/willmcgugan/rich) and [ropper](https://github.com/sashs/Ropper)
 
+> today (3 june 2021) i found that ropper (and also ROPGadget) fail to find a gadget that rp++ finds (this led me to have a hard time with challenge #2, as there was an add gadget that ropper simply didn't see). 
+
+Since find-gadgets uses the ropper api, I updated find-gadgets to also pull in rp++ gadgets. Currently, the rp++ gadgets that ropper didn't find are added to the 'all gadgets' file (found-gadgets.txt by default), and aren't categorized in the 'clean gadgets' file (found-gadgets.txt.clean by default). So, the coverage is there, just not well integrated. I may or may not revisit it and get the rp++ output categorized as well.
+
 ```text
 usage: find-gadgets.py [-h] -f FILES [FILES ...] [-b BAD_CHARS [BAD_CHARS ...]] [-o OUTPUT]
 
