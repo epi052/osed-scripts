@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 import re
 import sys
+import shutil
 import argparse
+import tempfile
+import subprocess
+from pathlib import Path
 
 from rich import print
 from rich.tree import Tree
@@ -19,6 +23,7 @@ class Gadgetizer:
             badbytes
         )  # ropper's badbytes option has to be an instance of str
         self.ropper_svc = self.get_ropper_service()
+        self.addresses = set()
 
     def get_ropper_service(self):
         # not all options need to be given
@@ -67,6 +72,7 @@ class Gadgetizer:
                     # not sure how to filter large ret sizes within ropper's search functionality, so doing it here
                     continue
                 tree.add(f"{escape(str(gadget))} :: {file}")
+                self.addresses.add(hex(gadget.address))
 
         return tree
 
@@ -136,6 +142,48 @@ class Gadgetizer:
                     f.write(f"{gadget}\n")
 
 
+def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes=None, base_address=None):
+    """ for w/e reason rp++ finds signficantly more gadgets, this function adds them to ropper's dump of all gadgets """
+    rp = Path('~/.local/bin/rp-lin-x64').expanduser().resolve()
+
+    if not rp.exists():
+        print(f"[bright_yellow][*][/bright_yellow] rp++ not found, downloading...")
+        rp.parent.mkdir(parents=True, exist_ok=True)
+
+        wget = shutil.which('wget')
+        if not wget:
+            print(f"[bright_red][!][/bright_red] wget not found, please install it or add -s|--skip-rp to your command")
+            return
+
+        subprocess.run(f'{wget} https://github.com/0vercl0k/rp/releases/download/v2-beta/rp-lin-x64 -O {rp}'.split())
+        rp.chmod(mode=0o755)
+
+    with tempfile.TemporaryFile(mode='w+', suffix='osed-rop') as tmp_file, open(outfile, 'a') as af:
+
+        command = f'{rp} -r5 -f {in_file} --unique'
+
+        if bad_bytes is not None:
+            bad_bytes = ''.join([f"\\x{byte}" for byte in bad_bytes])
+            command += f' --bad-bytes={bad_bytes}'
+        if base_address is not None:
+            command += f' --va={base_address}'
+
+        print(f"[bright_green][+][/bright_green] running '{command}'")
+        subprocess.run(command.split(), stdout=tmp_file)
+
+        tmp_file.seek(0)
+
+        for line in tmp_file.readlines():
+            if not line.startswith('0x'):
+                continue
+
+            rp_address = line.split(':')[0]
+
+            if rp_address not in ropper_addresses:
+                truncated = line.rsplit(';', maxsplit=1)[0]
+                af.write(f'{truncated}\n')
+
+
 def main(args):
     g = Gadgetizer(args.files, args.bad_chars, args.output, args.arch, args.color)
 
@@ -153,6 +201,16 @@ def main(args):
         f"[bright_green][+][/bright_green] Collection of all gadgets written to [bright_blue]{args.output}[/bright_blue]"
     )
     g.save()
+
+    if args.skip_rp:
+        return
+
+    for file in args.files:
+        if ":" in file:
+            file, base = file.split(":")
+            add_missing_gadgets(g.addresses, file, args.output, bad_bytes=args.bad_chars, base_address=base)
+        else:
+            add_missing_gadgets(g.addresses, file, args.output, bad_bytes=args.bad_chars)
 
 
 if __name__ == "__main__":
@@ -191,6 +249,12 @@ if __name__ == "__main__":
         "-c",
         "--color",
         help="colorize gadgets in output (default: False)",
+        action='store_true',
+    )
+    parser.add_argument(
+        "-s",
+        "--skip-rp",
+        help="don't run rp++ to find additional gadgets (default: False)",
         action='store_true',
     )
 
