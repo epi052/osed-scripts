@@ -186,7 +186,7 @@ One-shot script to perform the following actions:
 - run windbg commands after attaching (if `-commands` is provided)
 - restart a given service when windbg exits (if `-service-name` is provided)
 
-The values for `-service-name` and `-process-name` are tab-completeable. 
+The values for `-service-name` and `-process-name` are tab-completeable.
 
 ```
 .\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands '.load pykd; bp fastbackserver!recvfrom'
@@ -196,11 +196,21 @@ The values for `-service-name` and `-process-name` are tab-completeable.
 \\tsclient\shared\osed-scripts\attach-process.ps1 -service-name 'Sync Breeze Enterprise' -process-name syncbrs
 ```
 
+This script can be run inside a while loop for maximum laziness!
+
+```
+while ($true) {\\tsclient\shared\osed-scripts\attach-process.ps1 -process-name PROCESS_NAME -commands '.load pykd; bp SOME_ADDRESS; g; !exchain' ;}
+```
+
 ## WinDbg Scripts
 
 all windbg scripts require `pykd`
 
-run `.load pykd` then `!py c:\path\to\this\repo\script.py` 
+run `.load pykd` then `!py c:\path\to\this\repo\script.py`
+
+Alternatively, you can put the scripts in `C:\python37\scripts` so they execute as `!py SCRIPT_NAME`. 
+
+Also, using `attach-process.ps1` you can add `-commands '.load pykd; g'` to always have pykd available.
 
 ### find-ppr.py
 
@@ -312,4 +322,35 @@ chars += b'\xC2\xC3\xC4\xC5\xC6\xC7\xC8\xC9\xCA\xCB\xCC\xCD\xCE\xCF\xD0\xD1'
 chars += b'\xD2\xD3\xD4\xD5\xD6\xD7\xD8\xD9\xDA\xDB\xDC\xDD\xDE\xDF\xE0\xE1'
 chars += b'\xE2\xE3\xE4\xE5\xE6\xE7\xE8\xE9\xEA\xEB\xEC\xED\xEE\xEF\xF0\xF1'
 chars += b'\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF'
+```
+
+### search.py
+
+just a wrapper around the stupid windbg search syntax
+```
+usage: search.py [-h] [-t {byte,ascii,unicode}] pattern
+
+Searches memory for the given search term
+
+positional arguments:
+  pattern               what you want to search for
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t {byte,ascii,unicode}, --type {byte,ascii,unicode}
+                        data type to search for (default: byte)
+```
+```
+!py \\tsclient\shared\osed-scripts\search.py -t ascii fafd
+[=] running s -a 0 L?80000000 fafd
+[*] No results returned
+```
+```
+!py \\tsclient\shared\osed-scripts\search.py -t ascii ffff
+[=] running s -a 0 L?80000000 ffff
+0071290e  66 66 66 66 3a 31 32 37-2e 30 2e 30 2e 31 00 00  ffff:127.0.0.1..
+00717c5c  66 66 66 66 48 48 48 48-03 03 03 03 f6 f6 f6 f6  ffffHHHH........
+00718ddc  66 66 66 66 28 28 28 28-d9 d9 d9 d9 24 24 24 24  ffff((((....$$$$
+01763892  66 66 66 66 66 66 66 66-66 66 66 66 66 66 66 66  ffffffffffffffff
+...
 ```
