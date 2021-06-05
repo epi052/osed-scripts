@@ -220,6 +220,8 @@ Also, using `attach-process.ps1` you can add `-commands '.load pykd; g'` to alwa
 
 ### find-ppr.py
 
+Credit to @netspooky for the rewrite of this script! 
+
 Search for `pop r32; pop r32; ret` instructions by module name. By default it only shows usable addresses without bad chars defined in the BADCHARS list on line 6.
 Printed next to the gadgets is an escaped little endian address for pasting into your shellcode.
 
