@@ -182,11 +182,12 @@ Credit to discord user @SilverStr for the inspiration!
 
 One-shot script to perform the following actions:
 - start a given service (if `-service-name` is provided)
+- start a given executable path (if `-path` is provided)
 - start windbg and attach to the given process
 - run windbg commands after attaching (if `-commands` is provided)
 - restart a given service when windbg exits (if `-service-name` is provided)
 
-The values for `-service-name` and `-process-name` are tab-completeable.
+The values for `-service-name` and `-process-name` and `path` are tab-completeable.
 
 ```
 .\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands '.load pykd; bp fastbackserver!recvfrom'
@@ -195,6 +196,10 @@ The values for `-service-name` and `-process-name` are tab-completeable.
 ```
 \\tsclient\shared\osed-scripts\attach-process.ps1 -service-name 'Sync Breeze Enterprise' -process-name syncbrs
 ```
+
+```
+ \\tsclient\share\osed-scripts\attach-process.ps1 -path C:\Windows\System32\notepad.exe -process-name notepad                       
+ ```
 
 This script can be run inside a while loop for maximum laziness! Also, you can do things like `g` to start the process, followed by commands you'd like to run once the next break is hit. 
 
