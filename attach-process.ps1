@@ -1,6 +1,8 @@
 ﻿<#
 .PARAMETER service_name
     Service to restart (optional)
+.PARAMETER path
+    Path to executable to debug (optional)
 .PARAMETER process_name
     Process name to debug (required)
 .PARAMETER commands
@@ -51,16 +53,37 @@ DynamicParam {
     $ps_attrs = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
     $ps_paramattr = New-Object System.Management.Automation.ParameterAttribute
     $ps_attrs.Add($ps_paramattr)
-    $ps_set = get-process | select -ExpandProperty Name
-    $ps_validate = New-Object System.Management.Automation.ValidateSetAttribute($ps_set)
-    $ps_attrs.add($ps_validate)
     $ps_rtp = New-Object System.Management.Automation.RuntimeDefinedParameter($ps_param, [string], $ps_attrs)
     $RuntimeParameterDictionary.add($ps_param, $ps_rtp)
+
+    # adding path name argument
+    $name_param = 'path'
+    $name_attrs = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+    $name_paramattr = New-Object System.Management.Automation.ParameterAttribute 
+    $name_attrs.Add($name_paramattr)
+    $name_rtp = New-Object System.Management.Automation.RuntimeDefinedParameter($name_param, [string], $name_attrs)
+    $RuntimeParameterDictionary.add($name_param, $name_rtp)
 
     return $RuntimeParameterDictionary
 }
 begin {
     $service_name = $PsBoundParameters[$svc_param]
+    $path = $PsBoundParameters[$name_param]
+
+    if ($service_name -and $path) {
+        Write-Error "Cannot specify -service-name and -path arguments together." -ErrorAction Stop
+    }
+
+    if ($path) {
+        $path_validate = Test-Path $path
+        if ($path_validate -eq $false ) {
+            Write-Error "Supplied -path $path argument does not exist" -ErrorAction Stop
+        }
+
+        Write-Host "[+] Starting $path"
+        $pathproc = Start-Process -FilePath $path -PassThru
+    }
+
 
     if ($service_name) {
         $svc = get-service -name $service_name
@@ -72,10 +95,17 @@ begin {
     }
 
     $process_name = $PsBoundParameters[$ps_param]
+     
 }
 process {
     $process = Get-Process $process_name
-    
+
+    if (-not $process) {
+        Write-Host "[-] Killing $pathproc"
+        stop-process $pathproc
+        Write-Error "Supplied -process-name $process_name not found" -ErrorAction Stop
+    }
+
     $cmd_args = "-WF c:\windbg_custom.wew -p $($process.id)"
     
     if ($commands) {
@@ -86,7 +116,7 @@ process {
     
     write-host "[+] Attaching to $process_name"
     start-process -wait -filepath "C:\Program Files\Windows Kits\10\Debuggers\x86\windbg.exe" -verb RunAs -argumentlist $cmd_args
-
+   
     if ($service_name) {
         Do {
             # restart the service once we detach from windbg
