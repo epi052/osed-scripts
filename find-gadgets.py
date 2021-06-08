@@ -7,6 +7,7 @@ import tempfile
 import subprocess
 from pathlib import Path
 
+og_print = print
 from rich import print
 from rich.tree import Tree
 from rich.markup import escape
@@ -71,7 +72,7 @@ class Gadgetizer:
                 if gadget_filter.search(gadget.simpleString()):
                     # not sure how to filter large ret sizes within ropper's search functionality, so doing it here
                     continue
-                tree.add(f"{escape(str(gadget))} :: {file}")
+                tree.add(f"{escape(str(gadget)).replace(':', '  #', 1)} :: {file}")
                 self.addresses.add(hex(gadget.address))
 
         return tree
@@ -104,6 +105,7 @@ class Gadgetizer:
         tree.add(self._search_gadget("negate register", [f"neg {reg_prefix}??;"]))
         tree.add(self._search_gadget("xor register", [f"xor {reg_prefix}??, 0x????????"]))
         tree.add(self._search_gadget("push", [f"push {reg_prefix}??;"]))
+        tree.add(self._search_gadget("pushad", [f"pushad;"]))
         tree.add(self._search_gadget("pop", [f"pop {reg_prefix}??;"]))
         tree.add(
             self._search_gadget(
@@ -184,6 +186,64 @@ def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes=None,
                 af.write(f'{truncated}\n')
 
 
+def clean_up_all_gadgets(outfile):
+    """ normalize output from ropper and rp++ """
+    normal_spaces = re.compile(r'[ ]{2,}')
+    normal_semicolon = re.compile(r'[ ]+?;')
+
+    with tempfile.TemporaryFile(mode='w+', suffix='osed-rop') as tmp_file, open(outfile, 'r+') as f:
+        for line in f.readlines():
+            # rp++ adds a bunch of spaces around everything. normalize them for easier regex
+            line = normal_spaces.sub(' ', line)
+
+            # rp++ adds a bunch of spaces around semi-colons, ropper does not. normalize them for easier regex
+            line = normal_semicolon.sub(';', line)
+
+            # change "0x97753db7: add ..." to "0x97753db7  # add ..." for easy addition to source code
+            line = line.replace(':', '  #', 1)
+
+            tmp_file.write(line)
+
+        tmp_file.seek(0)
+
+        f.seek(0)
+        f.write(tmp_file.read())
+        # tmp_file became shorter than the original, need to remove the old contents that persist beyond
+        # what was just written
+        f.truncate()
+
+
+def print_useful_regex(outfile, arch):
+
+    reg_prefix = "e" if arch == "x86" else "r"
+    len_sort = "| awk '{ print length, $0 }' | sort -n -s -r | cut -d' ' -f2- | tail"
+    any_reg = f'{reg_prefix}..'
+
+    search_terms = list()
+    search_terms.append(f'(jmp|call) {reg_prefix}sp;')
+    search_terms.append(fr'mov {any_reg}, \[{any_reg}\];')
+    search_terms.append(fr'mov \[{any_reg}\], {any_reg};')
+    search_terms.append(fr'mov {any_reg}, {any_reg};')
+    search_terms.append(fr'xchg {any_reg}, {any_reg};')
+    search_terms.append(fr'push {any_reg};.*pop {any_reg};')
+    search_terms.append(fr'inc {any_reg};')
+    search_terms.append(fr'dec {any_reg};')
+    search_terms.append(fr'neg {any_reg};')
+    search_terms.append(fr'push {any_reg};')
+    search_terms.append(fr'pop {any_reg};')
+    search_terms.append('pushad;')
+    search_terms.append(fr'and {any_reg}, ({any_reg}|0x.+?);')
+    search_terms.append(fr'xor {any_reg}, ({any_reg}|0x.+?);')
+    search_terms.append(fr'add {any_reg}, ({any_reg}|0x.+?);')
+    search_terms.append(fr'sub {any_reg}, ({any_reg}|0x.+?);')
+    search_terms.append(fr'(lea|mov|and) \[?{any_reg}\]?, 0;')
+
+    print(f"[bright_green][+][/bright_green] helpful regex for searching within {outfile}\n")
+
+    for term in search_terms:
+        og_print(f"egrep '{term}' {outfile} {len_sort}")
+
+
 def main(args):
     g = Gadgetizer(args.files, args.bad_chars, args.output, args.arch, args.color)
 
@@ -211,6 +271,9 @@ def main(args):
             add_missing_gadgets(g.addresses, file, args.output, bad_bytes=args.bad_chars, base_address=base)
         else:
             add_missing_gadgets(g.addresses, file, args.output, bad_bytes=args.bad_chars)
+
+    clean_up_all_gadgets(args.output)
+    print_useful_regex(args.output, args.arch)
 
 
 if __name__ == "__main__":
