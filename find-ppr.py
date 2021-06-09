@@ -2,9 +2,23 @@ import pykd
 import argparse
 from enum import Enum, auto
 
-# Example bad chars, change to whatever
-BADCHARS = [0x00, 0x0A, 0x0D]
-# BADCHARS = [0x00,0x02,0x03,0x09,0x0A,0x0D,0x20,0x2E,0x2F]
+
+def hex_byte(byte_str):
+    """validate user input is a hex representation of an int between 0 and 255 inclusive"""
+    if byte_str == "??":
+        # windbg shows ?? when it can't access a memory region, but we shouldn't stop execution because of it
+        return byte_str
+
+    try:
+        val = int(byte_str, 16)
+        if 0 <= val <= 255:
+            return val
+        else:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"only *hex* bytes between 00 and ff are valid, found {byte_str}"
+        )
 
 
 class Module:
@@ -36,9 +50,9 @@ class PopR32(Enum):
     edi = auto()
 
 
-def checkBadChars(bAddr):
+def checkBadChars(bAddr, badChars):
     for i in bAddr:
-        if i in BADCHARS:
+        if i in badChars:
             return "--"
     return "OK"
 
@@ -55,7 +69,7 @@ def main(args):
         numGadgets = 0  # This is the number of gadgets found in this module
         print(f"[+] searching {module.name} for pop r32; pop r32; ret")
         print("[+] BADCHARS: ", end="")
-        for i in BADCHARS:
+        for i in args.bad:
             print("\\x{:02X}".format(i), end="")
         print()
 
@@ -73,7 +87,7 @@ def main(args):
                 for addr in result.splitlines():
                     try:
                         bAddr = int(addr, 16).to_bytes(4, "little")
-                        bcChk = checkBadChars(bAddr)
+                        bcChk = checkBadChars(bAddr, args.bad)
                         bAddrEsc = ""  # This is the escaped string containing the little endian addr for shellcode output
                         for b in bAddr:
                             bAddrEsc += "\\x{:02X}".format(b)
@@ -96,7 +110,7 @@ def main(args):
         )  # Increment total number of gadgets found
     print("\n---- STATS ----")  # Print out all the stats
     print(">> BADCHARS: ", end="")
-    for i in BADCHARS:
+    for i in args.bad:
         print("\\x{:02X}".format(i), end="")
     print()
     print(f">> Usable Gadgets Found: {totalGadgets}")
@@ -108,11 +122,24 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-s", dest="showbc", help="Show addresses with bad chars", action="store_true"
+        "-s",
+        "--showbc",
+        help="Show addresses with bad chars",
+        action="store_true"
     )
     parser.add_argument(
-        "modules",
+        "-b",
+        "--bad",
+        help="space separated list of hex bytes that are already known bad (ex: -b 00 0a 0d)",
+        nargs="+",
+        type=hex_byte,
+        default=[],
+    )
+    parser.add_argument(
+        "-m",
+        "--modules",
         help="module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)",
+        required=True,
         nargs="+",
     )
     args = parser.parse_args()
