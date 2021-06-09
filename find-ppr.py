@@ -122,10 +122,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-s",
-        "--showbc",
-        help="Show addresses with bad chars",
-        action="store_true"
+        "-s", "--showbc", help="Show addresses with bad chars", action="store_true"
     )
     parser.add_argument(
         "-b",
