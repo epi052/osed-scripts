@@ -1,6 +1,7 @@
-import pykd
 import argparse
 from enum import Enum, auto
+
+import pykd
 
 
 def hex_byte(byte_str):
