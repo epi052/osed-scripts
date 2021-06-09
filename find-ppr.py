@@ -19,8 +19,7 @@ def hex_byte(byte_str):
             raise ValueError
     except ValueError:
         raise argparse.ArgumentTypeError(
-            f"only *hex* bytes between 00 and ff are valid, found {byte_str}"
-        )
+            f"only *hex* bytes between 00 and ff are valid, found {byte_str}")
 
 
 class Module:
@@ -107,9 +106,8 @@ def main(args):
                         pass
         print(f"[+] {module.name}: Found {numGadgets} usable gadgets!")
         modGadgetCount[module.name] = numGadgets  # Add to the dict
-        totalGadgets = (
-            totalGadgets + numGadgets
-        )  # Increment total number of gadgets found
+        totalGadgets = (totalGadgets + numGadgets
+                        )  # Increment total number of gadgets found
     print("\n---- STATS ----")  # Print out all the stats
     print(">> BADCHARS: ", end="")
     for i in args.bad:
@@ -123,13 +121,15 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-s", "--showbc", help="Show addresses with bad chars", action="store_true"
-    )
+    parser.add_argument("-s",
+                        "--showbc",
+                        help="Show addresses with bad chars",
+                        action="store_true")
     parser.add_argument(
         "-b",
         "--bad",
-        help="space separated list of hex bytes that are already known bad (ex: -b 00 0a 0d)",
+        help=
+        "space separated list of hex bytes that are already known bad (ex: -b 00 0a 0d)",
         nargs="+",
         type=hex_byte,
         default=[],
@@ -137,7 +137,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-m",
         "--modules",
-        help="module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)",
+        help=
+        "module name(s) to search for pop pop ret (ex: find-ppr.py libspp diskpls libpal)",
         required=True,
         nargs="+",
     )
