@@ -207,7 +207,7 @@ run `.load pykd` then `!py c:\path\to\this\repo\script.py`
 Search for `pop r32; pop r32; ret` instructions by module name. By default it only shows usable addresses without bad chars defined in the BADCHARS list on line 6.
 Printed next to the gadgets is an escaped little endian address for pasting into your shellcode.
 
-    0:000> !py find-ppr_ns.py libspp libsync
+    0:000> !py find-ppr_ns.py -b 00 0A 0D -m libspp libsync
     [+] searching libsync for pop r32; pop r32; ret
     [+] BADCHARS: \x00\x0A\x0D
     [+] libsync: Found 0 usable gadgets!
@@ -231,7 +231,7 @@ Printed next to the gadgets is an escaped little endian address for pasting into
 
 Show all gadgets with the `-s` flag. 
 
-    0:000> !py find-ppr_ns.py libspp libsync -s
+    0:000> !py find-ppr_ns.py -b 00 0A 0D -m libspp libsync -s
     [+] searching libsync for pop r32; pop r32; ret
     [+] BADCHARS: \x00\x0A\x0D
     [--] libsync::0x0096add0: pop eax; pop ebx; ret ; \xD0\xAD\x96\x00
