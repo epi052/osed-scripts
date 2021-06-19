@@ -12,6 +12,7 @@ bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OS
 - [WinDbg Scripts](#windbg-scripts)
     - [find-ppr.py](#find-pprpy)
     - [find-bad-chars.py](#find-bad-charspy)
+    - [search.py](#searchpy)
 
 ## Standalone Scripts
 ### Installation:
