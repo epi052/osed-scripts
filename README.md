@@ -187,7 +187,7 @@ One-shot script to perform the following actions:
 - run windbg commands after attaching (if `-commands` is provided)
 - restart a given service when windbg exits (if `-service-name` is provided)
 
-The values for `-service-name` and `-process-name` and `-path` are tab-completable.
+The values for `-service-name`, `-process-name`, and `-path` are tab-completable.
 
 ```
 .\attach-process.ps1 -service-name fastbackserver -process-name fastbackserver -commands '.load pykd; bp fastbackserver!recvfrom'
