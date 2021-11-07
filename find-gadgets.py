@@ -6,6 +6,7 @@ import argparse
 import tempfile
 import subprocess
 from pathlib import Path
+import multiprocessing
 
 og_print = print
 from rich import print
@@ -276,7 +277,11 @@ def main(args):
     print_useful_regex(args.output, args.arch)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
+    #Fix issue with Ropper in macOS -> AttributeError: 'Ropper' object has no attribute '__gatherGadgetsByEndings'
+    multiprocessing.freeze_support()
+    multiprocessing.set_start_method('fork')
+    
     parser = argparse.ArgumentParser(
         description="Searches for clean, categorized gadgets from a given list of files"
     )
