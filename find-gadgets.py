@@ -144,7 +144,7 @@ class Gadgetizer:
                     f.write(f"{gadget}\n")
 
 
-def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes=None, base_address=None):
+def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes, base_address=None):
     """ for w/e reason rp++ finds signficantly more gadgets, this function adds them to ropper's dump of all gadgets """
     rp = Path('~/.local/bin/rp-lin-x64').expanduser().resolve()
 
@@ -164,10 +164,10 @@ def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes=None,
 
         command = f'{rp} -r5 -f {in_file} --unique'
 
-        if bad_bytes is not None:
+        if bad_bytes:
             bad_bytes = ''.join([f"\\x{byte}" for byte in bad_bytes])
             command += f' --bad-bytes={bad_bytes}'
-        if base_address is not None:
+        if base_address:
             command += f' --va={base_address}'
 
         print(f"[bright_green][+][/bright_green] running '{command}'")
@@ -293,7 +293,7 @@ if __name__ == "__main__":
         "--bad-chars",
         help="space separated list of bad chars to omit from gadgets (default: 00)",
         default=["00"],
-        nargs="+",
+        nargs="*",
     )
     parser.add_argument(
         "-a",
