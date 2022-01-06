@@ -4,9 +4,17 @@ import argparse
 import keystone as ks
 
 
+def is_valid_tag_count(s):
+    return True if len(s) == 4 else False
+
+
 def tag_to_hex(s):
+    string = s
+    if is_valid_tag_count(s) == False:
+        args.tag = "c0d3"
+        string = args.tag
     retval = list()
-    for char in s:
+    for char in string:
         retval.append(hex(ord(char)).replace("0x", ""))
     return "0x" + "".join(retval[::-1])
 
