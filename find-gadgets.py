@@ -6,6 +6,8 @@ import argparse
 import tempfile
 import subprocess
 from pathlib import Path
+import multiprocessing
+import platform
 
 og_print = print
 from rich import print
@@ -245,6 +247,10 @@ def print_useful_regex(outfile, arch):
 
 
 def main(args):
+    if platform.system() == "Darwin":
+        #Fix issue with Ropper in macOS -> AttributeError: 'Ropper' object has no attribute '__gatherGadgetsByEndings'
+        multiprocessing.set_start_method('fork')
+    
     g = Gadgetizer(args.files, args.bad_chars, args.output, args.arch, args.color)
 
     tree = Tree(
