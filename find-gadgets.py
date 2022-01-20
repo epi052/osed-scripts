@@ -6,6 +6,8 @@ import argparse
 import tempfile
 import subprocess
 from pathlib import Path
+import multiprocessing
+import platform
 
 og_print = print
 from rich import print
@@ -146,7 +148,13 @@ class Gadgetizer:
 
 def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes, base_address=None):
     """ for w/e reason rp++ finds signficantly more gadgets, this function adds them to ropper's dump of all gadgets """
-    rp = Path('~/.local/bin/rp-lin-x64').expanduser().resolve()
+    fname = ''
+    if platform.system() == 'Linux':
+        fname = 'rp-lin-x64'
+    elif platform.system() == "Darwin":
+        fname = 'rp-osx-x64'
+
+    rp = Path('~/.local/bin/' + fname).expanduser().resolve()
 
     if not rp.exists():
         print(f"[bright_yellow][*][/bright_yellow] rp++ not found, downloading...")
@@ -157,7 +165,9 @@ def add_missing_gadgets(ropper_addresses: set, in_file, outfile, bad_bytes, base
             print(f"[bright_red][!][/bright_red] wget not found, please install it or add -s|--skip-rp to your command")
             return
 
-        subprocess.run(f'{wget} https://github.com/0vercl0k/rp/releases/download/v2-beta/rp-lin-x64 -O {rp}'.split())
+        subprocess.run(f'{wget} https://github.com/0vercl0k/rp/releases/download/v2.0.2/{fname} -O {rp}'.split())
+
+
         rp.chmod(mode=0o755)
 
     with tempfile.TemporaryFile(mode='w+', suffix='osed-rop') as tmp_file, open(outfile, 'a') as af:
@@ -245,6 +255,10 @@ def print_useful_regex(outfile, arch):
 
 
 def main(args):
+    if platform.system() == "Darwin":
+        #Fix issue with Ropper in macOS -> AttributeError: 'Ropper' object has no attribute '__gatherGadgetsByEndings'
+        multiprocessing.set_start_method('fork')
+    
     g = Gadgetizer(args.files, args.bad_chars, args.output, args.arch, args.color)
 
     tree = Tree(
