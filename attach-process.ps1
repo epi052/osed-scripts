@@ -115,7 +115,16 @@ process {
     }
     
     write-host "[+] Attaching to $process_name"
-    start-process -wait -filepath "C:\Program Files\Windows Kits\10\Debuggers\x86\windbg.exe" -verb RunAs -argumentlist $cmd_args
+    $winDBGPath = ""
+    switch (([IntPtr]::Size).ToString()) {
+        "4" { $winDBGPath = "C:\Program Files\Windows Kits\10\Debuggers\x86\windbg.exe" }
+        "8" { $winDBGPath = "C:\Program Files (x86)\Windows Kits\10\Debuggers\x86\windbg.exe" }
+        Default { 
+            Write-Error "Could not determine architecture! Proceeding as x86!" 
+            $winDBGPath = "C:\Program Files\Windows Kits\10\Debuggers\x86\windbg.exe"
+            }
+    }
+        start-process -wait -filepath $winDBGPath -verb RunAs -argumentlist $cmd_args
    
     if ($service_name) {
         Do {
