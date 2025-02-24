@@ -8,6 +8,7 @@ bespoke tooling for offensive security's Windows Usermode Exploit Dev course (OS
     - [find-gadgets.py](#find-gadgetspy)
     - [shellcoder.py](#shellcoderpy)
     - [install-mona.sh](#install-monash)
+    - [install-pykd-py3.sh](#install-pykd-py3sh)
     - [attach-process.ps1](#attach-processps1)
 - [WinDbg Scripts](#windbg-scripts)
     - [find-ppr.py](#find-pprpy)
@@ -176,6 +177,70 @@ Protocol(warning): process_pdu_logon(), Unhandled login infotype 1
 Clipboard(error): xclip_handle_SelectionNotify(), unable to find a textual target to satisfy RDP clipboard text request
 
 ```
+
+### install-pykd-py3.sh
+
+For python 3.9 & 3.8 only!
+
+downloads all components necessary to install pykd and prompts you to use an admin shell on the windows box to finish installation.
+
+##### Usage: `install-pykd-py3.sh <RDP_IP_Addr> <username> <password>`
+
+```
+[*] Script for installing pykd for python3.9 & 3.8
+Respect and original idea: epi052
+[+] Created temp directory: /tmp/tmp.R4MtcYZ1FP
+[+] Copy install-pykd-py3.ps1 to /tmp/tmp.R4MtcYZ1FP
+[+] once the RDP window opens, execute the following command in an Administrator terminal:
+
+powershell -c "cat \\tsclient\pykd_share\install-pykd-py3.ps1 | powershell -"
+
+[=] downloading https://github.com/user-attachments/files/18549260/pykd_ext_2.0.0.25_x86.zip
+[=] downloading https://files.pythonhosted.org/packages/67/f7/19b2380834b6b4312a89731b0f00c8185b7f1ac015f2947da2969de5b37d/pykd-0.3.4.15-cp39-none-win32.whl
+Autoselecting keyboard map 'en-us' from locale
+Core(warning): Certificate received from server is NOT trusted by this system, an exception has been added by the user to trust this specific certificate.
+Failed to initialize NLA, do you have correct Kerberos TGT initialized ?
+Core(warning): Certificate received from server is NOT trusted by this system, an exception has been added by the user to trust this specific certificate.
+Connection established using SSL.
+Protocol(warning): process_pdu_logon(), Unhandled login infotype 1
+Clipboard(error): xclip_handle_SelectionNotify(), unable to find a textual target to satisfy RDP clipboard text request
+```
+
+```
+powershell -c "cat \\tsclient\pykd_share\install-pykd-py3.ps1 | powershell -"
+[+] The script is running with administrative privileges.
+[+] Creating folders
+
+
+    Directory: C:\
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----        2/15/2025  11:48 AM                Plugins
+
+
+
+
+    Directory: C:\Users\Administrator\Desktop
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----        2/15/2025  11:48 AM                pykd_share
+
+
+[+] copy pykd.dll
+[+] installing pykd whl
+Processing c:\users\administrator\desktop\pykd_share\pykd-0.3.4.15-cp39-none-win32.whl
+Installing collected packages: pykd
+Successfully installed pykd-0.3.4.15
+[+] set env for windbg extension path
+[!] All done =]
+
+```
+
+
 
 ### attach-process.ps1
 
